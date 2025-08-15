@@ -285,7 +285,7 @@ export default function Home() {
                  <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                   <DialogTrigger asChild>
                      <Button variant="ghost" size="icon">
-                        <Settings className="h-5 w-5" />
+                        <Settings className="h-6 w-6" />
                      </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -422,3 +422,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
