@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ChangeEvent } from 'react';
-import { parse, addDays } from 'date-fns';
+import { parse, addDays, max as dateMax, format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +56,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
       throw new Error('Invalid CSV header. Expected: title,startDate,duration,dependencies');
     }
 
-    const tasks: Task[] = lines.map((line, index) => {
+    const rawTasks = lines.map((line, index) => {
       const [title, startDateStr, durationStr, dependenciesStr] = line.trim().split(',');
       if (!title || !startDateStr || !durationStr) {
         throw new Error(`Invalid data on line ${index + 2}. Each task must have a title, startDate, and duration.`);
@@ -72,24 +72,70 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         throw new Error(`Invalid duration on line ${index + 2}. Must be a positive number.`);
       }
 
-      const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';') : [];
-      const endDate = addDays(startDate, duration -1);
-
-      return { id: title, title, startDate, endDate, duration, dependencies };
+      const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
+      
+      return { id: title, title, startDate, duration, dependencies };
     });
-    
-    // Validate dependencies
-    const taskIds = new Set(tasks.map(t => t.id));
-    for (const task of tasks) {
-      for (const depId of task.dependencies) {
-        if (!taskIds.has(depId)) {
-          throw new Error(`Dependency '${depId}' for task '${task.title}' not found in the CSV.`);
+
+    const taskMap = new Map<string, Task>();
+    const orderedTasks: Task[] = [];
+
+    // First pass: Validate dependencies and create initial tasks
+    const rawTaskMap = new Map(rawTasks.map(t => [t.id, t]));
+    for (const rawTask of rawTasks) {
+        for (const depId of rawTask.dependencies) {
+            if (!rawTaskMap.has(depId)) {
+                throw new Error(`Dependency '${depId}' for task '${rawTask.title}' not found in the CSV.`);
+            }
         }
-      }
     }
 
+    // Process tasks in an order that respects dependencies
+    const processed = new Set<string>();
+    let changedInPass = true;
+    while(orderedTasks.length < rawTasks.length && changedInPass) {
+        changedInPass = false;
+        for(const rawTask of rawTasks) {
+            if(processed.has(rawTask.id)) continue;
 
-    return tasks;
+            const dependenciesMet = rawTask.dependencies.every(depId => processed.has(depId));
+            if(dependenciesMet) {
+                let effectiveStartDate = rawTask.startDate;
+
+                if (rawTask.dependencies.length > 0) {
+                    const dependencyEndDates = rawTask.dependencies
+                        .map(depId => taskMap.get(depId)!.endDate)
+                        .filter((d): d is Date => !!d);
+
+                    if (dependencyEndDates.length > 0) {
+                        const latestDependencyEndDate = dateMax(dependencyEndDates);
+                        const dayAfterDependency = addDays(latestDependencyEndDate, 1);
+                        if(effectiveStartDate < dayAfterDependency) {
+                            effectiveStartDate = dayAfterDependency;
+                        }
+                    }
+                }
+                
+                const finalTask: Task = {
+                    ...rawTask,
+                    startDate: effectiveStartDate,
+                    endDate: addDays(effectiveStartDate, rawTask.duration - 1),
+                };
+                
+                taskMap.set(finalTask.id, finalTask);
+                orderedTasks.push(finalTask);
+                processed.add(finalTask.id);
+                changedInPass = true;
+            }
+        }
+    }
+
+    if (orderedTasks.length < rawTasks.length) {
+        const unprocessed = rawTasks.filter(t => !processed.has(t.id)).map(t => t.id).join(', ');
+        throw new Error(`Circular dependency detected or invalid dependency structure. Could not process tasks: ${unprocessed}`);
+    }
+
+    return orderedTasks;
   };
 
   return (
