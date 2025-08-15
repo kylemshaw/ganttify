@@ -5,4 +5,5 @@ export interface Task {
   endDate: Date;
   duration: number;
   dependencies: string[];
+  resource?: string;
 }

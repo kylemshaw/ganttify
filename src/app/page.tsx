@@ -70,10 +70,10 @@ export default function Home() {
                     <div className="mt-4 text-sm text-left bg-background/50 p-4 rounded-md border">
                       <h3 className="font-semibold mb-2 text-foreground">CSV Format:</h3>
                       <code className="block whitespace-pre-wrap font-mono text-xs">
-                        title,startDate,duration,dependencies<br/>
-                        Task A,2024-08-01,5,<br/>
-                        Task B,2024-08-08,4,Task A<br/>
-                        Task C,2024-08-08,6,Task A
+                        title,startDate,duration,dependencies,resource<br/>
+                        Task A,2024-08-01,5,,Resource 1<br/>
+                        Task B,2024-08-08,4,Task A,Resource 2<br/>
+                        Task C,2024-08-08,6,Task A,Resource 1
                       </code>
                     </div>
                   </div>

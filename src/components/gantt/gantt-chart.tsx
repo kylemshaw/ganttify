@@ -6,21 +6,21 @@ import type { Task } from '@/lib/types';
 import { addDays, differenceInDays, format, eachDayOfInterval, min, max } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 35;
+const ROW_HEIGHT = 28;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
-const BEND_OFFSET = 15;
-const TASK_BAR_HEIGHT = 35;
+const TASK_BAR_HEIGHT = 28;
 const ARROW_HEAD_SIZE = 5;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
@@ -79,7 +79,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
       }
     });
     return lines;
-  }, [tasksWithPositions]);
+  }, [tasksWithPositions, dayCellWidth]);
 
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -164,10 +164,16 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                 {tasksWithPositions.map((task, index) => (
                   <div 
                     key={task.id} 
-                    className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
+                    className="p-2 border-r border-b truncate text-sm flex items-center justify-between"
                     style={{ top: task.top, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
                   >
-                    {task.title}
+                    <span className="font-medium truncate">{task.title}</span>
+                    {task.resource && (
+                      <Badge variant="secondary" className="gap-1.5 shrink-0">
+                        <User className="w-3 h-3" />
+                        {task.resource}
+                      </Badge>
+                    )}
                   </div>
                 ))}
               </div>
@@ -202,13 +208,14 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                           <TooltipTrigger asChild>
                             <div
                               className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
+                              style={{ top: task.top + (ROW_HEIGHT - TASK_BAR_HEIGHT) / 2, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="font-bold">{task.title}</p>
+                            {task.resource && <p>Resource: {task.resource}</p>}
                             <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
                             {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
                             <p>Duration: {task.duration} days</p>

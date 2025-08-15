@@ -52,12 +52,12 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
     const lines = csvText.trim().split('\n');
     const header = lines.shift()?.trim().split(',');
 
-    if (!header || header.join(',') !== 'title,startDate,duration,dependencies') {
-      throw new Error('Invalid CSV header. Expected: title,startDate,duration,dependencies');
+    if (!header || header.join(',') !== 'title,startDate,duration,dependencies,resource') {
+      throw new Error('Invalid CSV header. Expected: title,startDate,duration,dependencies,resource');
     }
 
     const rawTasks = lines.map((line, index) => {
-      const [title, startDateStr, durationStr, dependenciesStr] = line.trim().split(',');
+      const [title, startDateStr, durationStr, dependenciesStr, resource] = line.trim().split(',');
       if (!title || !startDateStr || !durationStr) {
         throw new Error(`Invalid data on line ${index + 2}. Each task must have a title, startDate, and duration.`);
       }
@@ -74,11 +74,12 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
 
       const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
       
-      return { id: title, title, startDate, duration, dependencies };
+      return { id: title, title, startDate, duration, dependencies, resource: resource?.trim() };
     });
 
     const taskMap = new Map<string, Task>();
     const orderedTasks: Task[] = [];
+    const resourceEndDates = new Map<string, Date>();
 
     // First pass: Validate dependencies and create initial tasks
     const rawTaskMap = new Map(rawTasks.map(t => [t.id, t]));
@@ -102,6 +103,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
             if(dependenciesMet) {
                 let effectiveStartDate = rawTask.startDate;
 
+                // Check dependency constraints
                 if (rawTask.dependencies.length > 0) {
                     const dependencyEndDates = rawTask.dependencies
                         .map(depId => taskMap.get(depId)!.endDate)
@@ -110,20 +112,32 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
                     if (dependencyEndDates.length > 0) {
                         const latestDependencyEndDate = dateMax(dependencyEndDates);
                         const dayAfterDependency = addDays(latestDependencyEndDate, 1);
-                        if(effectiveStartDate < dayAfterDependency) {
-                            effectiveStartDate = dayAfterDependency;
-                        }
+                        effectiveStartDate = dateMax([effectiveStartDate, dayAfterDependency]);
                     }
                 }
+                
+                // Check resource constraints
+                if (rawTask.resource) {
+                  const lastResourceTaskEndDate = resourceEndDates.get(rawTask.resource);
+                  if (lastResourceTaskEndDate) {
+                    const dayAfterResourceFreed = addDays(lastResourceTaskEndDate, 1);
+                    effectiveStartDate = dateMax([effectiveStartDate, dayAfterResourceFreed]);
+                  }
+                }
+                
+                const endDate = addDays(effectiveStartDate, rawTask.duration - 1);
                 
                 const finalTask: Task = {
                     ...rawTask,
                     startDate: effectiveStartDate,
-                    endDate: addDays(effectiveStartDate, rawTask.duration - 1),
+                    endDate: endDate,
                 };
                 
                 taskMap.set(finalTask.id, finalTask);
                 orderedTasks.push(finalTask);
+                if (finalTask.resource) {
+                  resourceEndDates.set(finalTask.resource, endDate);
+                }
                 processed.add(finalTask.id);
                 changedInPass = true;
             }
@@ -144,7 +158,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         <FileText className="h-4 w-4" />
         <AlertTitle>CSV Format Guide</AlertTitle>
         <AlertDescription>
-         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies</code>. Separate multiple dependencies with a semicolon (;).
+         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;).
         </AlertDescription>
       </Alert>
       <div className="flex flex-col sm:flex-row gap-2">
