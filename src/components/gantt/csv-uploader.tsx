@@ -1,17 +1,18 @@
 
 "use client";
 
-import { useRef, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { parse, addDays, max as dateMax, format, getDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/lib/types';
-import { Upload, X, FileText } from 'lucide-react';
+import { Upload, X, FileText, GanttChartSquare } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Label } from '../ui/label';
 
 interface CsvUploaderProps {
-  onDataUploaded: (tasks: Task[]) => void;
+  onDataUploaded: (tasks: Task[], projectName: string) => void;
   onClear: () => void;
   hasData: boolean;
 }
@@ -42,23 +43,47 @@ const getCalendarDuration = (startDate: Date, endDate: Date): number => {
   return Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 }
 
+const toTitleCase = (str: string) => {
+  return str.replace(/\w\S*/g, (txt) => {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  }).replace(/[-_]/g, ' ');
+};
+
+
 export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUploaderProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [projectName, setProjectName] = useState('');
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    const fileNameWithoutExt = selectedFile.name.split('.').slice(0, -1).join('.');
+    setProjectName(toTitleCase(fileNameWithoutExt));
+    setFile(selectedFile);
+  };
+  
+  const handleProcessFile = () => {
+    if (!file) {
+      toast({
+        variant: "destructive",
+        title: "No File Selected",
+        description: "Please select a CSV file to upload.",
+      });
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
       try {
         const parsedTasks = parseCsv(text);
-        onDataUploaded(parsedTasks);
+        onDataUploaded(parsedTasks, projectName);
         toast({
           title: "Success",
-          description: `Successfully loaded ${parsedTasks.length} tasks.`,
+          description: `Successfully loaded ${parsedTasks.length} tasks for project "${projectName}".`,
         });
       } catch (error: any) {
         toast({
@@ -71,9 +96,11 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
       if(fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      setFile(null);
+      setProjectName('');
     };
     reader.readAsText(file);
-  };
+  }
 
   const parseCsv = (csvText: string): Task[] => {
     const lines = csvText.trim().split('\n');
@@ -217,23 +244,43 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
          Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded).
         </AlertDescription>
       </Alert>
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button onClick={() => fileInputRef.current?.click()} className="w-full">
-          <Upload className="mr-2" /> Upload CSV
-        </Button>
-        <Input
-          type="file"
-          accept=".csv"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        {hasData && (
-          <Button onClick={onClear} variant="destructive" className="w-full sm:w-auto">
-            <X className="mr-2" /> Clear
+
+      {!file ? (
+         <Button onClick={() => fileInputRef.current?.click()} className="w-full">
+            <Upload className="mr-2" /> Select CSV File
           </Button>
-        )}
-      </div>
+      ) : (
+        <div className="space-y-4 rounded-md border p-4">
+            <div className="space-y-2">
+                <Label htmlFor='project-name'>Project Name</Label>
+                <Input 
+                    id="project-name"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Enter project name"
+                />
+            </div>
+            <Button onClick={handleProcessFile} className="w-full">
+                <GanttChartSquare className="mr-2" /> Create Chart
+            </Button>
+        </div>
+      )}
+      
+      <Input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {hasData && (
+        <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+          <Button onClick={onClear} variant="destructive" className="w-full">
+            <X className="mr-2" /> Clear Chart Data
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

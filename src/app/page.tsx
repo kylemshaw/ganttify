@@ -41,6 +41,7 @@ const getWorkingDays = (start: Date, end: Date) => {
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projectName, setProjectName] = useState('Ganttify');
   const [key, setKey] = useState(Date.now()); // To re-render chart on new upload
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
@@ -50,14 +51,16 @@ export default function Home() {
     setCurrentDate(new Date());
   }, []);
 
-  const handleDataUploaded = (newTasks: Task[]) => {
+  const handleDataUploaded = (newTasks: Task[], name: string) => {
     setTasks(newTasks);
+    setProjectName(name);
     setKey(Date.now()); // Force re-mount of GanttChart to reset its internal state
     setIsUploaderOpen(false); // Close sheet on successful upload
   };
   
   const handleClear = () => {
     setTasks([]);
+    setProjectName('Ganttify');
     setIsUploaderOpen(false);
   }
 
@@ -82,7 +85,7 @@ export default function Home() {
     }
     const url = URL.createObjectURL(blob);
     link.href = url;
-    link.setAttribute('download', 'gantt-chart-export.csv');
+    link.setAttribute('download', `${projectName.toLowerCase().replace(/\s/g, '-')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -147,7 +150,7 @@ export default function Home() {
       <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="container mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold font-headline text-primary">Ganttify</h1>
+            <h1 className="text-3xl font-bold font-headline text-primary">{projectName}</h1>
             <p className="text-muted-foreground">Create Gantt charts from your CSV files instantly.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -161,7 +164,7 @@ export default function Home() {
               <SheetTrigger asChild>
                 <Button>
                   <Upload className="mr-2" />
-                  Upload CSV
+                  {tasks.length > 0 ? 'Upload New' : 'Upload CSV'}
                 </Button>
               </SheetTrigger>
               <SheetContent>
