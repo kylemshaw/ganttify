@@ -6,9 +6,10 @@ import type { Task } from '@/lib/types';
 import CsvUploader from '@/components/gantt/csv-uploader';
 import GanttChart from '@/components/gantt/gantt-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GanttChartSquare, Upload } from 'lucide-react';
+import { GanttChartSquare, Upload, Download } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -26,6 +27,33 @@ export default function Home() {
     setIsUploaderOpen(false);
   }
 
+  const handleExport = () => {
+    if (tasks.length === 0) return;
+
+    const header = 'title,startDate,duration,dependencies,resource\n';
+    const csvRows = tasks.map(task => {
+      const title = `"${task.title.replace(/"/g, '""')}"`;
+      const startDate = format(task.startDate, 'yyyy-MM-dd');
+      const duration = task.workingDuration;
+      const dependencies = `"${task.dependencies.join(';')}"`;
+      const resource = task.resource ? `"${task.resource.replace(/"/g, '""')}"` : '';
+      return [title, startDate, duration, dependencies, resource].join(',');
+    });
+
+    const csvContent = header + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.href) {
+      URL.revokeObjectURL(link.href);
+    }
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', 'gantt-chart-export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
       <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
@@ -34,25 +62,33 @@ export default function Home() {
             <h1 className="text-3xl font-bold font-headline text-primary">Ganttify</h1>
             <p className="text-muted-foreground">Create Gantt charts from your CSV files instantly.</p>
           </div>
-          <Sheet open={isUploaderOpen} onOpenChange={setIsUploaderOpen}>
-            <SheetTrigger asChild>
-              <Button>
-                <Upload className="mr-2" />
-                Upload CSV
+          <div className="flex items-center gap-2">
+            {tasks.length > 0 && (
+              <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2" />
+                Export CSV
               </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Upload Your Data</SheetTitle>
-                <SheetDescription>
-                  Upload a CSV file to generate your Gantt chart. You can also clear the existing chart.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="py-4">
-                <CsvUploader onDataUploaded={handleDataUploaded} onClear={handleClear} hasData={tasks.length > 0} />
-              </div>
-            </SheetContent>
-          </Sheet>
+            )}
+            <Sheet open={isUploaderOpen} onOpenChange={setIsUploaderOpen}>
+              <SheetTrigger asChild>
+                <Button>
+                  <Upload className="mr-2" />
+                  Upload CSV
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Upload Your Data</SheetTitle>
+                  <SheetDescription>
+                    Upload a CSV file to generate your Gantt chart. You can also clear the existing chart.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="py-4">
+                  <CsvUploader onDataUploaded={handleDataUploaded} onClear={handleClear} hasData={tasks.length > 0} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
       <main className="flex-1 container mx-auto p-4 flex flex-col gap-6">
