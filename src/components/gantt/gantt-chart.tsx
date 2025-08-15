@@ -20,6 +20,8 @@ const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
 const BEND_OFFSET = 15;
+const TASK_BAR_HEIGHT = ROW_HEIGHT - 20;
+
 
 export default function GanttChart({ tasks }: GanttChartProps) {
   const [dayCellWidth, setDayCellWidth] = useState(DAY_CELL_WIDTH_DEFAULT);
@@ -63,11 +65,10 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const barHeight = ROW_HEIGHT - 12;
             const startX = dependencyTask.left + dependencyTask.width;
-            const startY = dependencyTask.top + barHeight / 2;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT / 2;
             const endX = task.left;
-            const endY = task.top + barHeight / 2;
+            const endY = task.top + TASK_BAR_HEIGHT / 2;
             
             const midX = startX + BEND_OFFSET;
 
@@ -134,7 +135,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         <div className="overflow-x-auto" ref={scrollContainerRef}>
           <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: totalChartHeight }}>
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-background flex" style={{height: HEADER_HEIGHT}}>
+            <div className="sticky top-0 z-20 bg-background flex" style={{height: HEADER_HEIGHT, width: chartWidth + TASK_LIST_WIDTH}}>
               <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
                  <h4 className="font-semibold">Tasks</h4>
               </div>
@@ -175,7 +176,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               </div>
 
               {/* Grid & Bars */}
-              <div className="relative" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
+              <div className="absolute" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
                   {days.map((day, index) => (
@@ -203,8 +204,8 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <Tooltip key={task.id}>
                           <TooltipTrigger asChild>
                             <div
-                              className="absolute bg-primary/80 hover:bg-primary rounded-md my-1.5 mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top, left: task.left, width: task.width, height: ROW_HEIGHT - 12 }}
+                              className="absolute bg-primary/80 hover:bg-primary rounded-md my-[10px] mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
+                              style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
