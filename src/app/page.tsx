@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -28,45 +29,42 @@ export default function Home() {
           <p className="text-muted-foreground">Create Gantt charts from your CSV files instantly.</p>
         </div>
       </header>
-      <main className="flex-1 container mx-auto p-4">
-        <div className="grid md:grid-cols-[400px_1fr] gap-6 items-start">
-          <div className="flex flex-col gap-6 sticky top-24">
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle>Upload Your Data</CardTitle>
-                <CardDescription>Upload a CSV file to generate your Gantt chart. You can also clear the existing chart.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CsvUploader onDataUploaded={handleDataUploaded} onClear={handleClear} hasData={tasks.length > 0} />
-              </CardContent>
-            </Card>
-          </div>
-          <div className="md:col-span-1 min-h-[calc(100vh-2rem)]">
-            <Card className="h-full shadow-md">
-              <CardContent className="h-full p-2 md:p-4">
-                {tasks.length > 0 ? (
-                  <GanttChart key={key} tasks={tasks} />
-                ) : (
-                  <div className="flex items-center justify-center h-full rounded-lg bg-muted/50">
-                    <div className="text-center text-muted-foreground p-8">
-                      <GanttChartSquare className="mx-auto h-16 w-16 mb-4 text-primary/50" />
-                      <h2 className="text-xl font-semibold mb-2 text-foreground">Your Gantt Chart Awaits</h2>
-                      <p>Upload a CSV file with your project tasks to get started. The chart will dynamically appear here.</p>
-                      <div className="mt-4 text-sm text-left bg-background/50 p-4 rounded-md border">
-                        <h3 className="font-semibold mb-2 text-foreground">CSV Format:</h3>
-                        <code className="block whitespace-pre-wrap font-mono text-xs">
-                          title,startDate,duration,dependencies<br/>
-                          Task A,2024-08-01,5,<br/>
-                          Task B,2024-08-08,4,Task A<br/>
-                          Task C,2024-08-08,6,Task A
-                        </code>
-                      </div>
+      <main className="flex-1 container mx-auto p-4 flex flex-col gap-6">
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>Upload Your Data</CardTitle>
+            <CardDescription>Upload a CSV file to generate your Gantt chart. You can also clear the existing chart.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CsvUploader onDataUploaded={handleDataUploaded} onClear={handleClear} hasData={tasks.length > 0} />
+          </CardContent>
+        </Card>
+        
+        <div className="flex-1">
+           <Card className="shadow-md min-h-[600px] h-full">
+            <CardContent className="h-full p-2 md:p-4">
+              {tasks.length > 0 ? (
+                <GanttChart key={key} tasks={tasks} />
+              ) : (
+                <div className="flex items-center justify-center h-full rounded-lg bg-muted/50">
+                  <div className="text-center text-muted-foreground p-8">
+                    <GanttChartSquare className="mx-auto h-16 w-16 mb-4 text-primary/50" />
+                    <h2 className="text-xl font-semibold mb-2 text-foreground">Your Gantt Chart Awaits</h2>
+                    <p>Upload a CSV file with your project tasks to get started. The chart will dynamically appear here.</p>
+                    <div className="mt-4 text-sm text-left bg-background/50 p-4 rounded-md border">
+                      <h3 className="font-semibold mb-2 text-foreground">CSV Format:</h3>
+                      <code className="block whitespace-pre-wrap font-mono text-xs">
+                        title,startDate,duration,dependencies<br/>
+                        Task A,2024-08-01,5,<br/>
+                        Task B,2024-08-08,4,Task A<br/>
+                        Task C,2024-08-08,6,Task A
+                      </code>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
