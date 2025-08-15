@@ -63,12 +63,16 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width;
-            const startY = dependencyTask.top + ROW_HEIGHT / 2;
+            const startY = dependencyTask.top + (ROW_HEIGHT - 8) / 2 + (ROW_HEIGHT - 8) / 2;
             const endX = task.left;
-            const endY = task.top + ROW_HEIGHT / 2;
+            const endY = task.top + (ROW_HEIGHT - 8) / 2;
   
-            const midX = endX - 10;
-            const d = `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
+            const controlX1 = startX + 20;
+            const controlY1 = startY;
+            const controlX2 = endX - 20;
+            const controlY2 = endY;
+
+            const d = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
 
             lines.push({ key: `${depId}-${task.id}`, d });
           }
