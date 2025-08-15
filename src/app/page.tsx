@@ -235,38 +235,10 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             {tasks.length > 0 && (
-              <>
                 <Button onClick={handleExport} variant="outline">
                   <Download className="mr-2" />
                   Export CSV
                 </Button>
-                 <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                  <DialogTrigger asChild>
-                     <Button variant="ghost" size="icon">
-                        <Settings />
-                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Project Settings</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="project-name-input" className="text-right">Name</Label>
-                            <Input 
-                                id="project-name-input"
-                                value={tempProjectName}
-                                onChange={(e) => setTempProjectName(e.target.value)}
-                                className="col-span-3"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleProjectNameSave}>Save Changes</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </>
             )}
 
             <Sheet open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
@@ -309,6 +281,34 @@ export default function Home() {
               </SheetContent>
             </Sheet>
 
+            {tasks.length > 0 && (
+                 <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                  <DialogTrigger asChild>
+                     <Button variant="ghost" size="icon">
+                        <Settings className="h-5 w-5" />
+                     </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Project Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="project-name-input" className="text-right">Name</Label>
+                            <Input 
+                                id="project-name-input"
+                                value={tempProjectName}
+                                onChange={(e) => setTempProjectName(e.target.value)}
+                                className="col-span-3"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleProjectNameSave}>Save Changes</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+            )}
           </div>
         </div>
       </header>
