@@ -41,7 +41,7 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
-          <div className="md:col-span-1 min-h-[calc(100vh-10rem)]">
+          <div className="md:col-span-1 min-h-[calc(100vh-8rem)]">
             <Card className="h-full shadow-md">
               <CardContent className="h-full p-2 md:p-4">
                 {tasks.length > 0 ? (
