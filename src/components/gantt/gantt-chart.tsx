@@ -13,7 +13,7 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 80;
+const ROW_HEIGHT = 60;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
@@ -67,7 +67,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2 + TASK_BAR_HEIGHT;
+            const startY = dependencyTask.top + (ROW_HEIGHT + TASK_BAR_HEIGHT) / 2;
             
             const endX = task.left - ARROW_HEAD_SIZE;
             const endY = task.top + ROW_HEIGHT / 2;
