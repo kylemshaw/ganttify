@@ -13,11 +13,12 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 50;
+const ROW_HEIGHT = 40;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 48;
+const TASK_LIST_WIDTH = 250;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
   const [dayCellWidth, setDayCellWidth] = useState(DAY_CELL_WIDTH_DEFAULT);
@@ -119,11 +120,11 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto" ref={scrollContainerRef}>
-          <div className="relative grid" style={{ width: chartWidth + 250, height: totalChartHeight }}>
+        <div className="overflow-x-auto overflow-y-hidden" ref={scrollContainerRef}>
+          <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: totalChartHeight }}>
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-background grid" style={{ gridTemplateColumns: '250px 1fr' }}>
-              <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{height: HEADER_HEIGHT}}>
+            <div className="sticky top-0 z-20 bg-background flex" style={{height: HEADER_HEIGHT}}>
+              <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
                  <h4 className="font-semibold">Tasks</h4>
               </div>
               <div className="overflow-hidden">
@@ -149,14 +150,14 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             </div>
 
             {/* Content Area */}
-            <div className="relative" style={{ gridColumn: '1 / -1', gridRow: '2' }}>
+            <div className="relative" style={{ width: '100%', height: chartHeight }}>
               {/* Task List */}
-              <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: 250, height: chartHeight }}>
+              <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
                 {tasks.map((task, index) => (
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
-                    style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: 250, position: 'absolute' }}
+                    style={{ height: ROW_HEIGHT, width: TASK_LIST_WIDTH }}
                   >
                     {task.title}
                   </div>
@@ -164,7 +165,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               </div>
 
               {/* Grid & Bars */}
-              <div className="absolute top-0 left-[250px]" style={{ width: chartWidth, height: chartHeight }}>
+              <div className="relative" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
                   {days.map((day, index) => (
@@ -182,40 +183,43 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                 
                 {/* Horizontal grid lines */}
                 {tasks.map((_, index) => (
-                  <div key={index} className="w-full border-b" style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, position: 'absolute' }} />
+                  <div key={index} className="w-full border-b" style={{ height: ROW_HEIGHT }} />
                 ))}
 
-                {/* Task Bars */}
-                {tasksWithPositions.map((task) => (
-                    <Tooltip key={task.id}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="absolute bg-primary/80 hover:bg-primary rounded-md my-1.5 mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                          style={{ top: task.top + 4, left: task.left, width: task.width, height: ROW_HEIGHT - 8 }}
-                        >
-                          <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="font-bold">{task.title}</p>
-                        <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
-                        {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
-                        <p>Duration: {task.duration} days</p>
-                      </TooltipContent>
-                    </Tooltip>
-                ))}
-                
-                {/* Dependency Arrows */}
-                <svg width={chartWidth} height={chartHeight} className="absolute top-0 left-0 pointer-events-none">
-                  <defs>
-                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--accent))" stroke="hsl(var(--accent))" />
-                    </marker>
-                  </defs>
-                  {dependencyLines.map(line => (
-                    <path key={line.key} d={line.d} stroke="hsl(var(--accent))" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
-                  ))}
-                </svg>
+                {/* Task Bars & Dep Lines Container */}
+                <div className="absolute top-0 left-0 w-full h-full">
+                    {/* Task Bars */}
+                    {tasksWithPositions.map((task) => (
+                        <Tooltip key={task.id}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="absolute bg-primary/80 hover:bg-primary rounded-md my-1.5 mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
+                              style={{ top: task.top, left: task.left, width: task.width, height: ROW_HEIGHT - 8 }}
+                            >
+                              <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-bold">{task.title}</p>
+                            <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
+                            {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
+                            <p>Duration: {task.duration} days</p>
+                          </TooltipContent>
+                        </Tooltip>
+                    ))}
+                    
+                    {/* Dependency Arrows */}
+                    <svg width={chartWidth} height={chartHeight} className="absolute top-0 left-0 pointer-events-none">
+                      <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                          <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--accent))" stroke="hsl(var(--accent))" />
+                        </marker>
+                      </defs>
+                      {dependencyLines.map(line => (
+                        <path key={line.key} d={line.d} stroke="hsl(var(--accent))" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
+                      ))}
+                    </svg>
+                </div>
               </div>
             </div>
           </div>
