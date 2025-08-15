@@ -67,22 +67,21 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT + 10;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT;
             
             const endX = task.left - ARROW_HEAD_SIZE;
-            const endY = task.top + (TASK_BAR_HEIGHT / 2) + 10;
+            const endY = task.top + TASK_BAR_HEIGHT / 2;
   
-            const intermediateY1 = startY + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2 - 10;
-            const intermediateY2 = endY;
+            const intermediateY = endY;
 
-            const d = `M ${startX} ${startY} V ${intermediateY1} H ${endX - BEND_OFFSET} V ${intermediateY2} H ${endX}`;
+            const d = `M ${startX} ${startY} V ${intermediateY} H ${endX}`;
             lines.push({ key: `${depId}-${task.id}`, d });
           }
         });
       }
     });
     return lines;
-  }, [tasksWithPositions]);
+  }, [tasksWithPositions, dayCellWidth]);
 
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -206,7 +205,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                           <TooltipTrigger asChild>
                             <div
                               className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top + 10, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
+                              style={{ top: task.top + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
@@ -240,5 +239,3 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     </TooltipProvider>
   );
 }
-
-    
