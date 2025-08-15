@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Task } from '@/lib/types';
+import type { Task, RawTask } from '@/lib/types';
 import CsvUploader from '@/components/gantt/csv-uploader';
 import ManualTaskEntry from '@/components/gantt/manual-task-entry';
 import GanttChart from '@/components/gantt/gantt-chart';
@@ -22,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { processTasks } from '@/lib/task-utils';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface ResourceSummary {
@@ -47,6 +49,7 @@ export default function Home() {
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Set current date on client-side to avoid hydration mismatch
@@ -58,9 +61,47 @@ export default function Home() {
     setProjectName(name);
     setKey(Date.now()); // Force re-mount of GanttChart to reset its internal state
     setIsUploaderOpen(false); // Close sheet on successful upload
-    setIsManualEntryOpen(false);
   };
   
+  const handleAddTasks = (newTasks: RawTask[]) => {
+    const existingRawTasks: RawTask[] = tasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      startDate: t.startDate,
+      workingDuration: t.workingDuration,
+      dependencies: t.dependencies,
+      resource: t.resource,
+    }));
+
+    const combinedRawTasks = [...existingRawTasks, ...newTasks];
+
+    try {
+      // Check for duplicate task titles which are used as IDs for dependencies
+      const titles = new Set<string>();
+      for (const task of combinedRawTasks) {
+        if (titles.has(task.title)) {
+          throw new Error(`Duplicate task title found: "${task.title}". Task titles must be unique to be used for dependencies.`);
+        }
+        titles.add(task.title);
+      }
+
+      const reprocessedTasks = processTasks(combinedRawTasks);
+      setTasks(reprocessedTasks);
+      setKey(Date.now());
+      setIsManualEntryOpen(false);
+       toast({
+        title: "Tasks Added",
+        description: `${newTasks.length} new tasks have been added to the project.`,
+      });
+    } catch(error: any) {
+        toast({
+          variant: "destructive",
+          title: "Error Adding Tasks",
+          description: error.message,
+        });
+    }
+  };
+
   const handleClear = () => {
     setTasks([]);
     setProjectName('Ganttify');
@@ -186,11 +227,11 @@ export default function Home() {
                 <SheetHeader>
                   <SheetTitle>Add Tasks Manually</SheetTitle>
                   <SheetDescription>
-                    Use the worksheet below to define your project tasks.
+                    Use the worksheet below to {tasks.length > 0 ? 'add more' : 'define your project'} tasks.
                   </SheetDescription>
                 </SheetHeader>
                 <div className="py-4">
-                  <ManualTaskEntry onDataUploaded={handleDataUploaded} />
+                  <ManualTaskEntry onAddTasks={handleAddTasks} hasTasks={tasks.length > 0} />
                 </div>
               </SheetContent>
             </Sheet>
@@ -327,5 +368,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -12,8 +12,7 @@ import { Calendar as CalendarIcon, GanttChartSquare, Plus, Trash2 } from 'lucide
 import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { processTasks } from '@/lib/task-utils';
-import type { Task, RawTask } from '@/lib/types';
+import type { RawTask } from '@/lib/types';
 
 
 interface ManualTask {
@@ -26,7 +25,8 @@ interface ManualTask {
 }
 
 interface ManualTaskEntryProps {
-  onDataUploaded: (tasks: Task[], projectName: string) => void;
+  onAddTasks: (tasks: RawTask[]) => void;
+  hasTasks: boolean;
 }
 
 const newRow = (): ManualTask => ({
@@ -38,7 +38,7 @@ const newRow = (): ManualTask => ({
   resource: '',
 });
 
-export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps) {
+export default function ManualTaskEntry({ onAddTasks, hasTasks }: ManualTaskEntryProps) {
   const [rows, setRows] = useState<ManualTask[]>([newRow()]);
   const [projectName, setProjectName] = useState('My Project');
   const { toast } = useToast();
@@ -56,7 +56,7 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
   };
 
   const handleGenerateChart = () => {
-    if (!projectName.trim()) {
+    if (!hasTasks && !projectName.trim()) {
       toast({
         variant: "destructive",
         title: "Project Name Required",
@@ -66,39 +66,45 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
     }
     
     try {
-       const rawTasks: RawTask[] = rows.map((row, index) => {
-        if (!row.title || !row.startDate || !row.duration) {
-            throw new Error(`Invalid data on row ${index + 1}. Each task must have a title, startDate, and duration.`);
-        }
+       const rawTasks: RawTask[] = rows
+        .filter(row => row.title.trim() !== '' && row.duration.trim() !== '')
+        .map((row, index) => {
+          if (!row.title || !row.startDate || !row.duration) {
+              throw new Error(`Invalid data on row ${index + 1}. Each task must have a title, startDate, and duration.`);
+          }
 
-        let startDate = parse(row.startDate, 'yyyy-MM-dd', new Date());
-        if (isNaN(startDate.getTime())) {
-            throw new Error(`Invalid date format on row ${index + 1}. Use YYYY-MM-DD.`);
-        }
-        
-        const duration = parseInt(row.duration, 10);
-        if (isNaN(duration) || duration <= 0) {
-            throw new Error(`Invalid duration on row ${index + 1}. Must be a positive number.`);
-        }
+          let startDate = parse(row.startDate, 'yyyy-MM-dd', new Date());
+          if (isNaN(startDate.getTime())) {
+              throw new Error(`Invalid date format on row ${index + 1}. Use YYYY-MM-DD.`);
+          }
+          
+          const duration = parseInt(row.duration, 10);
+          if (isNaN(duration) || duration <= 0) {
+              throw new Error(`Invalid duration on row ${index + 1}. Must be a positive number.`);
+          }
 
-        const dependencies = row.dependencies?.trim() ? row.dependencies.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
-        
-        return {
-            id: row.title, // Use title as ID for dependency linking and uniqueness
-            title: row.title.trim(),
-            startDate,
-            workingDuration: duration,
-            dependencies,
-            resource: row.resource?.trim()
-        };
-      });
+          const dependencies = row.dependencies?.trim() ? row.dependencies.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
+          
+          return {
+              id: row.title, // Use title as ID for dependency linking and uniqueness
+              title: row.title.trim(),
+              startDate,
+              workingDuration: duration,
+              dependencies,
+              resource: row.resource?.trim()
+          };
+        });
+
+      if (rawTasks.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "No Tasks to Add",
+          description: "Please fill out at least one task row.",
+        });
+        return;
+      }
       
-      const finalTasks = processTasks(rawTasks);
-      onDataUploaded(finalTasks, projectName);
-      toast({
-        title: "Success",
-        description: `Successfully loaded ${finalTasks.length} tasks for project "${projectName}".`,
-      });
+      onAddTasks(rawTasks);
 
     } catch (error: any) {
        toast({
@@ -112,15 +118,17 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor='project-name-manual'>Project Name</Label>
-        <Input 
-            id="project-name-manual"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            placeholder="Enter project name"
-        />
-      </div>
+      {!hasTasks && (
+        <div className="space-y-2">
+            <Label htmlFor='project-name-manual'>Project Name</Label>
+            <Input 
+                id="project-name-manual"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Enter project name"
+            />
+        </div>
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -200,15 +208,13 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
       <div className="flex justify-between items-center mt-4">
         <Button variant="outline" onClick={handleAddRow}>
             <Plus className="mr-2" />
-            Add Task
+            Add Row
         </Button>
         <Button onClick={handleGenerateChart}>
             <GanttChartSquare className="mr-2" />
-            Create Chart
+            {hasTasks ? 'Add to Project' : 'Create Chart'}
         </Button>
       </div>
     </div>
   );
 }
-
-    
