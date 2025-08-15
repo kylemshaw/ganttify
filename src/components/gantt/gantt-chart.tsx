@@ -14,7 +14,7 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 22;
+const ROW_HEIGHT = 30;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
@@ -50,7 +50,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
 
   const tasksWithPositions = useMemo(() => {
     return tasks.map((task, index) => {
-      const top = index * ROW_HEIGHT;
+      const top = index * ROW_HEIGHT + (ROW_HEIGHT - TASK_BAR_HEIGHT) / 2;
       const left = differenceInDays(task.startDate, chartStartDate) * dayCellWidth;
       const width = task.duration * dayCellWidth - 2; // -2 for padding
       return { ...task, top, left, width, rowIndex: index };
@@ -79,7 +79,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
       }
     });
     return lines;
-  }, [tasksWithPositions, dayCellWidth]);
+  }, [tasksWithPositions]);
 
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -171,7 +171,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm flex items-center justify-between"
-                    style={{ top: task.top, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
+                    style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
                   >
                     <span className="font-medium truncate">{task.title}</span>
                     {task.resource && (
