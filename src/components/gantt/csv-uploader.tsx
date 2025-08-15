@@ -161,26 +161,16 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
     const resourceEndDates = new Map<string, Date>();
 
     // First pass: Validate dependencies and create initial tasks
-    const rawTaskMap = new Map(rawTasks.map(t => [t.id, t]));
-    if (hasIdColumn) {
-      // Create a map from title to ID for dependency lookup if needed.
-      const titleToIdMap = new Map(rawTasks.map(t => [t.title, t.id]));
-      for (const rawTask of rawTasks) {
-          rawTask.dependencies = rawTask.dependencies.map(dep => {
-              // If the dependency is a title, convert it to an ID.
-              // If it's not in the map, we assume it's already an ID.
-              return titleToIdMap.get(dep) || dep;
-          });
-      }
-    }
-
+    const rawTaskMap = new Map(rawTasks.map(t => [t.title, t]));
     for (const rawTask of rawTasks) {
-        for (const depId of rawTask.dependencies) {
-            if (!rawTaskMap.has(depId)) {
-                throw new Error(`Dependency '${depId}' for task '${rawTask.title}' not found in the CSV.`);
+        for (const depTitle of rawTask.dependencies) {
+            if (!rawTaskMap.has(depTitle)) {
+                throw new Error(`Dependency '${depTitle}' for task '${rawTask.title}' not found in the CSV.`);
             }
         }
     }
+    
+    const titleToIdMap = new Map(rawTasks.map(t => [t.title, t.id]));
 
     // Process tasks in an order that respects dependencies
     const processed = new Set<string>();
@@ -190,14 +180,21 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         for(const rawTask of rawTasks) {
             if(processed.has(rawTask.id)) continue;
 
-            const dependenciesMet = rawTask.dependencies.every(depId => processed.has(depId));
+            const dependenciesMet = rawTask.dependencies.every(depTitle => {
+                const depId = titleToIdMap.get(depTitle);
+                return depId ? processed.has(depId) : false;
+            });
+
             if(dependenciesMet) {
                 let effectiveStartDate = rawTask.startDate;
 
                 // Check dependency constraints
                 if (rawTask.dependencies.length > 0) {
                     const dependencyEndDates = rawTask.dependencies
-                        .map(depId => taskMap.get(depId)!.endDate)
+                        .map(depTitle => {
+                            const depId = titleToIdMap.get(depTitle);
+                            return depId ? taskMap.get(depId)?.endDate : undefined;
+                        })
                         .filter((d): d is Date => !!d);
 
                     if (dependencyEndDates.length > 0) {
