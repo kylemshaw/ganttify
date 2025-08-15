@@ -6,10 +6,12 @@ import type { Task } from '@/lib/types';
 import CsvUploader from '@/components/gantt/csv-uploader';
 import GanttChart from '@/components/gantt/gantt-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GanttChartSquare, Upload, Download, User, Calendar, Briefcase, CheckCircle, Clock } from 'lucide-react';
+import { GanttChartSquare, Upload, Download, User, Calendar as CalendarIcon, Briefcase, CheckCircle, Clock } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Table,
   TableBody,
@@ -201,14 +203,35 @@ export default function Home() {
         </div>
         {resourceSummary && (
           <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase />
-                Resource Summary
-              </CardTitle>
-              <CardDescription>
-                An overview of resource allocation and project timeline.
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase />
+                  Resource Summary
+                </CardTitle>
+                <CardDescription>
+                  An overview of resource allocation and project timeline.
+                </CardDescription>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className="w-[280px] justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={currentDate || undefined}
+                    onSelect={(date) => date && setCurrentDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </CardHeader>
             <CardContent>
               <Table>
@@ -218,10 +241,10 @@ export default function Home() {
                       <div className="flex items-center gap-2"><User /> Resource</div>
                     </TableHead>
                     <TableHead>
-                      <div className="flex items-center gap-2"><Calendar /> Start Date</div>
+                      <div className="flex items-center gap-2"><CalendarIcon /> Start Date</div>
                     </TableHead>
                     <TableHead>
-                      <div className="flex items-center gap-2"><Calendar /> End Date</div>
+                      <div className="flex items-center gap-2"><CalendarIcon /> End Date</div>
                     </TableHead>
                     <TableHead className="text-right">
                        <div className="flex items-center gap-2 justify-end"><Briefcase /> Total Days</div>
