@@ -1,15 +1,30 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Task } from '@/lib/types';
 import CsvUploader from '@/components/gantt/csv-uploader';
 import GanttChart from '@/components/gantt/gantt-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GanttChartSquare, Upload, Download } from 'lucide-react';
+import { GanttChartSquare, Upload, Download, User, Calendar, Briefcase } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { format, min as dateMin, max as dateMax } from 'date-fns';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+
+interface ResourceSummary {
+  startDate: Date;
+  endDate: Date;
+  totalWorkingDays: number;
+}
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -53,6 +68,46 @@ export default function Home() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const resourceSummary = useMemo(() => {
+    if (tasks.length === 0) return null;
+
+    const summary = new Map<string, ResourceSummary>();
+
+    tasks.forEach(task => {
+      if (task.resource) {
+        const resource = task.resource;
+        const existing = summary.get(resource);
+        if (existing) {
+          existing.startDate = dateMin([existing.startDate, task.startDate]);
+          existing.endDate = dateMax([existing.endDate, task.endDate]);
+          existing.totalWorkingDays += task.workingDuration;
+        } else {
+          summary.set(resource, {
+            startDate: task.startDate,
+            endDate: task.endDate,
+            totalWorkingDays: task.workingDuration
+          });
+        }
+      }
+    });
+
+    const sortedSummary = Array.from(summary.entries()).sort(([a], [b]) => a.localeCompare(b));
+    
+    // Project total calculation
+    const projectStartDate = dateMin(tasks.map(t => t.startDate));
+    const projectEndDate = dateMax(tasks.map(t => t.endDate));
+    const projectTotalDays = Array.from(summary.values()).reduce((acc, curr) => acc + curr.totalWorkingDays, 0);
+
+    const projectSummary: [string, ResourceSummary] = ['Project Total', {
+      startDate: projectStartDate,
+      endDate: projectEndDate,
+      totalWorkingDays: projectTotalDays
+    }];
+
+    return [...sortedSummary, projectSummary];
+
+  }, [tasks]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
@@ -118,6 +173,49 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
+        {resourceSummary && (
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase />
+                Resource Summary
+              </CardTitle>
+              <CardDescription>
+                An overview of resource allocation and project timeline.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">
+                      <div className="flex items-center gap-2"><User /> Resource</div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-2"><Calendar /> Start Date</div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-2"><Calendar /> End Date</div>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex items-center gap-2 justify-end"><Briefcase /> Total Working Days</div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {resourceSummary.map(([resource, summary]) => (
+                    <TableRow key={resource} className={resource === 'Project Total' ? 'bg-muted/80 hover:bg-muted font-bold' : ''}>
+                      <TableCell>{resource}</TableCell>
+                      <TableCell>{format(summary.startDate, 'MMM d, yyyy')}</TableCell>
+                      <TableCell>{format(summary.endDate, 'MMM d, yyyy')}</TableCell>
+                      <TableCell className="text-right">{summary.totalWorkingDays}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
