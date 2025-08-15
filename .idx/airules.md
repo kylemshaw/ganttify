@@ -8,6 +8,7 @@ This document provides guidelines for the AI programmer to ensure consistent and
 *   **Conciseness:** Write code and documentation that is to the point and avoids unnecessary complexity.
 *   **Context:** Always consider the existing codebase and project structure. Reference relevant files and components.
 *   **Iteration:** Be prepared to iterate on solutions based on feedback.
+*   Be honest with your feedback and do not try to please me with your responses
 
 ## Code Style
 
@@ -40,3 +41,7 @@ For example:
 *   "Add a new component in `src/components/ui/my-new-component.tsx`."
 
 By following these guidelines, the AI programmer can effectively contribute to the project while maintaining code quality and consistency.
+
+## Git
+
+*   Do not commit changes you make until I have approved them

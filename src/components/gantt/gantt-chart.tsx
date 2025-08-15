@@ -146,24 +146,22 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
               <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, minWidth: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
                  <h4 className="font-semibold">Tasks</h4>
               </div>
-              <div className="overflow-hidden">
-                <div className="flex" style={{ width: chartWidth }}>
-                  {days.map((day) => {
-                      const dayOfWeek = getDay(day);
-                      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                      return (
-                        <div 
-                          key={day.toISOString()} 
-                          className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
-                            "bg-muted/75": isWeekend,
-                          })}
-                          style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
-                        >
-                          <div>{format(day, 'MMM d')}</div>
-                        </div>
-                      )
-                    })}
-                </div>
+              <div className="flex" style={{ width: chartWidth }}>
+                {days.map((day) => {
+                    const dayOfWeek = getDay(day);
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                    return (
+                      <div 
+                        key={day.toISOString()} 
+                        className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
+                          "bg-muted/75": isWeekend,
+                        })}
+                        style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
+                      >
+                        <div>{format(day, 'MMM d')}</div>
+                      </div>
+                    )
+                  })}
               </div>
             </div>
 

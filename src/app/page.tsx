@@ -223,7 +223,7 @@ export default function Home() {
 
   }, [tasks, currentDate]);
 
-  const mainButtonText = tasks.length > 0 ? 'Upload New CSV' : 'Upload CSV';
+  const mainButtonText = 'Upload CSV';
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
