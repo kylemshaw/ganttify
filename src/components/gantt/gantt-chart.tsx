@@ -59,13 +59,13 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
   }, [tasks, chartStartDate, dayCellWidth]);
 
   const dependencyLines = useMemo(() => {
-    const taskMap = new Map(tasksWithPositions.map(t => [t.id, t]));
+    const taskMap = new Map(tasksWithPositions.map(t => [t.title, t]));
     const lines: { key: string; d: string }[] = [];
   
     tasksWithPositions.forEach(task => {
       if(task.dependencies) {
-        task.dependencies.forEach(depId => {
-          const dependencyTask = taskMap.get(depId);
+        task.dependencies.forEach(depTitle => {
+          const dependencyTask = taskMap.get(depTitle);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
             const startY = dependencyTask.top + TASK_BAR_HEIGHT; 
@@ -75,7 +75,7 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
 
             const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
 
-            lines.push({ key: `${depId}-${task.id}`, d });
+            lines.push({ key: `${depTitle}-${task.id}`, d });
           }
         });
       }
@@ -121,7 +121,7 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
     <TooltipProvider>
       <div className="w-full flex flex-col bg-card text-card-foreground rounded-lg overflow-hidden border">
         <div className="p-2 border-b flex items-center justify-between bg-muted/50">
-          <div className="text-foreground font-semibold text-lg px-4 py-1">
+           <div className="text-foreground font-semibold text-lg px-4 py-1">
             {projectName} Timeline
           </div>
           <div className="flex items-center gap-1">
