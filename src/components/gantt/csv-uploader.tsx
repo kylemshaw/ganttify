@@ -162,6 +162,18 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
 
     // First pass: Validate dependencies and create initial tasks
     const rawTaskMap = new Map(rawTasks.map(t => [t.id, t]));
+    if (hasIdColumn) {
+      // Create a map from title to ID for dependency lookup if needed.
+      const titleToIdMap = new Map(rawTasks.map(t => [t.title, t.id]));
+      for (const rawTask of rawTasks) {
+          rawTask.dependencies = rawTask.dependencies.map(dep => {
+              // If the dependency is a title, convert it to an ID.
+              // If it's not in the map, we assume it's already an ID.
+              return titleToIdMap.get(dep) || dep;
+          });
+      }
+    }
+
     for (const rawTask of rawTasks) {
         for (const depId of rawTask.dependencies) {
             if (!rawTaskMap.has(depId)) {
