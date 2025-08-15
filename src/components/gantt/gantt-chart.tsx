@@ -69,8 +69,8 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
             const startY = dependencyTask.top + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2 + TASK_BAR_HEIGHT;
             
-            const endX = task.left;
-            const endY = task.top + TASK_BAR_HEIGHT / 2;
+            const endX = task.left - ARROW_HEAD_SIZE;
+            const endY = task.top + ROW_HEIGHT / 2;
   
             const intermediateY = endY;
 
