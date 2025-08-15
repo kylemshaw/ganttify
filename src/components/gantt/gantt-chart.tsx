@@ -36,7 +36,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     const maxDate = endDates.length > 0 ? max(endDates) : addDays(minDate, 30);
     
     return {
-      chartStartDate: minDate,
+      chartStartDate: addDays(minDate, -1),
       chartEndDate: addDays(maxDate, 7),
     };
   }, [tasks]);
@@ -63,14 +63,12 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const barHeight = ROW_HEIGHT - 8;
-            const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + barHeight;
+            const startX = dependencyTask.left + dependencyTask.width;
+            const startY = dependencyTask.top + barHeight / 2;
             const endX = task.left;
             const endY = task.top + barHeight / 2;
-
-            const halfWayY = startY + (ROW_HEIGHT - barHeight) / 2;
             
-            const d = `M ${startX} ${startY} V ${halfWayY} H ${endX - 10} V ${endY} H ${endX}`;
+            const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
 
             lines.push({ key: `${depId}-${task.id}`, d });
           }
@@ -157,11 +155,11 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight }}>
               {/* Task List */}
               <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
-                {tasks.map((task, index) => (
+                {tasksWithPositions.map((task) => (
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
-                    style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
+                    style={{ top: task.top, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
                   >
                     {task.title}
                   </div>
@@ -186,7 +184,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                 </div>
                 
                 {/* Horizontal grid lines */}
-                {tasks.map((_, index) => (
+                {tasksWithPositions.map((_, index) => (
                   <div key={index} className="w-full border-b" style={{ height: ROW_HEIGHT }} />
                 ))}
 
