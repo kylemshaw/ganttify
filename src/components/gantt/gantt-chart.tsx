@@ -119,7 +119,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto" ref={scrollContainerRef} style={{ height: totalChartHeight }}>
+        <div className="overflow-x-auto" ref={scrollContainerRef}>
           <div className="relative grid" style={{ width: chartWidth + 250, height: totalChartHeight }}>
             {/* Header */}
             <div className="sticky top-0 z-20 bg-background grid" style={{ gridTemplateColumns: '250px 1fr' }}>
@@ -151,12 +151,12 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             {/* Content Area */}
             <div className="relative" style={{ gridColumn: '1 / -1', gridRow: '2' }}>
               {/* Task List */}
-              <div className="absolute top-0 left-0 z-10" style={{ width: 250 }}>
+              <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: 250, height: chartHeight }}>
                 {tasks.map((task, index) => (
                   <div 
                     key={task.id} 
-                    className="sticky left-0 bg-background p-2 border-r border-b truncate text-sm font-medium flex items-center"
-                    style={{ top: index * ROW_HEIGHT + HEADER_HEIGHT, height: ROW_HEIGHT, width: 250 }}
+                    className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
+                    style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: 250, position: 'absolute' }}
                   >
                     {task.title}
                   </div>
@@ -164,7 +164,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               </div>
 
               {/* Grid & Bars */}
-              <div className="absolute top-[--header-height] left-[250px]" style={{ width: chartWidth, height: chartHeight, '--header-height': `${HEADER_HEIGHT}px` } as React.CSSProperties}>
+              <div className="absolute top-0 left-[250px]" style={{ width: chartWidth, height: chartHeight }}>
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
                   {days.map((day, index) => (

@@ -30,7 +30,7 @@ export default function Home() {
         </div>
       </header>
       <main className="flex-1 container mx-auto p-4 flex flex-col gap-6">
-        <Card className="shadow-md">
+        <Card className="shadow-md w-full">
           <CardHeader>
             <CardTitle>Upload Your Data</CardTitle>
             <CardDescription>Upload a CSV file to generate your Gantt chart. You can also clear the existing chart.</CardDescription>
@@ -40,7 +40,7 @@ export default function Home() {
           </CardContent>
         </Card>
         
-        <div className="flex-1">
+        <div className="flex-1 w-full">
            <Card className="shadow-md">
             <CardContent className="p-2 md:p-4">
               {tasks.length > 0 ? (
