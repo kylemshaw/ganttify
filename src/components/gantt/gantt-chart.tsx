@@ -67,9 +67,9 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT;
+            const startY = dependencyTask.top + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2 + TASK_BAR_HEIGHT;
             
-            const endX = task.left - ARROW_HEAD_SIZE;
+            const endX = task.left - BEND_OFFSET;
             const endY = task.top + TASK_BAR_HEIGHT / 2;
   
             const intermediateY = endY;
@@ -81,7 +81,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
       }
     });
     return lines;
-  }, [tasksWithPositions, dayCellWidth]);
+  }, [tasksWithPositions]);
 
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -116,7 +116,6 @@ export default function GanttChart({ tasks }: GanttChartProps) {
 
   const chartWidth = days.length * dayCellWidth;
   const chartHeight = tasks.length * ROW_HEIGHT;
-  const totalChartHeight = chartHeight + HEADER_HEIGHT;
 
   return (
     <TooltipProvider>
@@ -139,9 +138,9 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           </div>
         </div>
         <div className="overflow-x-auto" ref={scrollContainerRef}>
-          <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: totalChartHeight }}>
+          <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight + HEADER_HEIGHT }}>
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-background flex" style={{height: HEADER_HEIGHT, width: chartWidth + TASK_LIST_WIDTH}}>
+            <div className="sticky top-0 z-20 bg-background flex" style={{width: chartWidth + TASK_LIST_WIDTH}}>
               <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, minWidth: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
                  <h4 className="font-semibold">Tasks</h4>
               </div>
@@ -164,7 +163,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight }}>
               {/* Task List */}
               <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
-                {tasksWithPositions.map((task) => (
+                {tasksWithPositions.map((task, index) => (
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
