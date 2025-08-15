@@ -13,15 +13,15 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 60;
+const ROW_HEIGHT = 80;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
 const BEND_OFFSET = 15;
-const TASK_BAR_HEIGHT = ROW_HEIGHT - 20;
-
+const TASK_BAR_HEIGHT = 40;
+const ARROW_HEAD_SIZE = 5;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
   const [dayCellWidth, setDayCellWidth] = useState(DAY_CELL_WIDTH_DEFAULT);
@@ -60,27 +60,29 @@ export default function GanttChart({ tasks }: GanttChartProps) {
   const dependencyLines = useMemo(() => {
     const taskMap = new Map(tasksWithPositions.map(t => [t.id, t]));
     const lines: { key: string; d: string }[] = [];
+  
     tasksWithPositions.forEach(task => {
       if(task.dependencies) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const startX = dependencyTask.left + dependencyTask.width;
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT / 2;
-            const endX = task.left;
-            const endY = task.top + TASK_BAR_HEIGHT / 2;
+            const startX = dependencyTask.left + dependencyTask.width / 2;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT + 10;
             
-            const midX = startX + BEND_OFFSET;
+            const endX = task.left - ARROW_HEAD_SIZE;
+            const endY = task.top + (TASK_BAR_HEIGHT / 2) + 10;
+  
+            const intermediateY1 = startY + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2 - 10;
+            const intermediateY2 = endY;
 
-            const d = `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
-
+            const d = `M ${startX} ${startY} V ${intermediateY1} H ${endX - BEND_OFFSET} V ${intermediateY2} H ${endX}`;
             lines.push({ key: `${depId}-${task.id}`, d });
           }
         });
       }
     });
     return lines;
-  }, [tasksWithPositions, dayCellWidth]);
+  }, [tasksWithPositions]);
 
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -99,11 +101,16 @@ export default function GanttChart({ tasks }: GanttChartProps) {
   
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const todayIndex = differenceInDays(new Date(), chartStartDate);
-      if (todayIndex > 0 && todayIndex < days.length) {
-        scrollContainerRef.current.scrollLeft = (todayIndex * dayCellWidth) - (scrollContainerRef.current.clientWidth / 2);
+      if(tasks.length > 0) {
+        const firstTaskLeft = differenceInDays(tasks[0].startDate, chartStartDate) * dayCellWidth;
+        scrollContainerRef.current.scrollLeft = Math.max(0, firstTaskLeft - 50);
       } else {
-        scrollContainerRef.current.scrollLeft = 0;
+        const todayIndex = differenceInDays(new Date(), chartStartDate);
+        if (todayIndex > 0 && todayIndex < days.length) {
+          scrollContainerRef.current.scrollLeft = (todayIndex * dayCellWidth) - (scrollContainerRef.current.clientWidth / 2);
+        } else {
+          scrollContainerRef.current.scrollLeft = 0;
+        }
       }
     }
   }, [tasks, chartStartDate, dayCellWidth, days.length]);
@@ -136,26 +143,20 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: totalChartHeight }}>
             {/* Header */}
             <div className="sticky top-0 z-20 bg-background flex" style={{height: HEADER_HEIGHT, width: chartWidth + TASK_LIST_WIDTH}}>
-              <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
+              <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, minWidth: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
                  <h4 className="font-semibold">Tasks</h4>
               </div>
               <div className="overflow-hidden">
                 <div className="flex" style={{ width: chartWidth }}>
-                  {days.map((day) => {
-                    const isMonthStart = day.getDate() === 1;
-                    return (
+                  {days.map((day) => (
                       <div 
                         key={day.toISOString()} 
-                        className={cn(
-                          "flex items-center justify-center border-b border-r text-center text-xs",
-                          isMonthStart ? "border-l-2 border-primary/50" : ""
-                        )}
-                        style={{ width: dayCellWidth, height: HEADER_HEIGHT }}
+                        className="flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground"
+                        style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
                       >
-                         <div className="text-muted-foreground">{format(day, 'MMM d')}</div>
+                         <div>{format(day, 'MMM d')}</div>
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               </div>
             </div>
@@ -164,7 +165,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight }}>
               {/* Task List */}
               <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
-                {tasksWithPositions.map((task, index) => (
+                {tasksWithPositions.map((task) => (
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
@@ -176,7 +177,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               </div>
 
               {/* Grid & Bars */}
-              <div className="absolute" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
+              <div className="absolute top-0" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
                   {days.map((day, index) => (
@@ -194,7 +195,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                 
                 {/* Horizontal grid lines */}
                 {tasksWithPositions.map((_, index) => (
-                  <div key={index} className="w-full border-b" style={{ height: ROW_HEIGHT }} />
+                  <div key={index} className="w-full border-b" style={{ height: ROW_HEIGHT, top: index*ROW_HEIGHT, position: 'absolute' }} />
                 ))}
 
                 {/* Task Bars & Dep Lines Container */}
@@ -204,8 +205,8 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <Tooltip key={task.id}>
                           <TooltipTrigger asChild>
                             <div
-                              className="absolute bg-primary/80 hover:bg-primary rounded-md my-[10px] mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
+                              className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
+                              style={{ top: task.top + 10, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
@@ -239,3 +240,5 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     </TooltipProvider>
   );
 }
+
+    
