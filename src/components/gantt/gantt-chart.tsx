@@ -62,17 +62,15 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const startX = dependencyTask.left + dependencyTask.width;
-            const startY = dependencyTask.top + (ROW_HEIGHT - 8) / 2 + (ROW_HEIGHT - 8) / 2;
+            const barHeight = ROW_HEIGHT - 8;
+            const startX = dependencyTask.left + dependencyTask.width / 2;
+            const startY = dependencyTask.top + barHeight;
             const endX = task.left;
-            const endY = task.top + (ROW_HEIGHT - 8) / 2;
-  
-            const controlX1 = startX + 20;
-            const controlY1 = startY;
-            const controlX2 = endX - 20;
-            const controlY2 = endY;
+            const endY = task.top + barHeight / 2;
 
-            const d = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
+            const halfWayY = startY + (ROW_HEIGHT - barHeight) / 2;
+            
+            const d = `M ${startX} ${startY} V ${halfWayY} H ${endX - 10} V ${endY} H ${endX}`;
 
             lines.push({ key: `${depId}-${task.id}`, d });
           }
@@ -81,6 +79,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     });
     return lines;
   }, [tasksWithPositions]);
+
 
   const handleZoom = (direction: 'in' | 'out') => {
     setDayCellWidth(prev => {
