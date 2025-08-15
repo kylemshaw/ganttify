@@ -66,13 +66,24 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const startX = dependencyTask.left + dependencyTask.width;
+            const startX = dependencyTask.left + dependencyTask.width + 2;
             const startY = dependencyTask.top + TASK_BAR_HEIGHT / 2;
             
             const endX = task.left - ARROW_HEAD_SIZE - 2;
             const endY = task.top + TASK_BAR_HEIGHT / 2;
   
-            const d = `M ${startX} ${startY} H ${endX}`;
+            const controlX1 = startX + 20;
+            const controlX2 = endX - 20;
+
+            let d: string;
+            if (endX > startX) {
+                 d = `M ${startX} ${startY} H ${endX}`;
+            } else {
+                const corner1Y = startY < endY ? startY - ROW_HEIGHT/4 : startY + ROW_HEIGHT/4;
+                const corner2Y = startY < endY ? endY + ROW_HEIGHT/4 : endY - ROW_HEIGHT/4;
+                d = `M ${startX} ${startY} H ${startX + 10} V ${corner1Y} H ${endX - 10} V ${endY} H ${endX}`;
+            }
+
             lines.push({ key: `${depId}-${task.id}`, d });
           }
         });
