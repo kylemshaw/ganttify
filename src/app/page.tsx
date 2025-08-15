@@ -202,7 +202,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
-      <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
+      <header className="p-4 border-b bg-card/50">
         <div className="container mx-auto flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold font-headline text-primary">Ganttify</h1>
