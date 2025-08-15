@@ -150,7 +150,7 @@ export default function Home() {
       <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="container mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold font-headline text-primary">{projectName}</h1>
+            <h1 className="text-3xl font-bold font-headline text-primary">Ganttify</h1>
             <p className="text-muted-foreground">Create Gantt charts from your CSV files instantly.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ export default function Home() {
            <Card className="shadow-md">
             <CardContent className="p-0">
               {tasks.length > 0 ? (
-                <GanttChart key={key} tasks={tasks} />
+                <GanttChart key={key} tasks={tasks} projectName={projectName} />
               ) : (
                 <div className="flex items-center justify-center min-h-[500px] rounded-lg bg-muted/50">
                   <div className="text-center text-muted-foreground p-8">
@@ -291,3 +291,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

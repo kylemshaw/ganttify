@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface GanttChartProps {
   tasks: Task[];
+  projectName: string;
 }
 
 const ROW_HEIGHT = 40;
@@ -23,7 +24,7 @@ const TASK_LIST_WIDTH = 250;
 const TASK_BAR_HEIGHT = 28;
 const ARROW_HEAD_SIZE = 5;
 
-export default function GanttChart({ tasks }: GanttChartProps) {
+export default function GanttChart({ tasks, projectName }: GanttChartProps) {
   const [dayCellWidth, setDayCellWidth] = useState(DAY_CELL_WIDTH_DEFAULT);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -66,8 +67,8 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const startX = dependencyTask.left + dependencyTask.width / 2; // Horizontal center
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT; // Bottom of the task bar
+            const startX = dependencyTask.left + dependencyTask.width / 2;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT; 
             
             const endX = task.left;
             const endY = task.top + TASK_BAR_HEIGHT / 2;
@@ -120,7 +121,9 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     <TooltipProvider>
       <div className="w-full flex flex-col bg-card text-card-foreground rounded-lg overflow-hidden border">
         <div className="p-2 border-b flex items-center justify-between bg-muted/50">
-          <h3 className="font-semibold text-lg">Project Timeline</h3>
+          <div className="bg-primary/80 text-primary-foreground font-semibold text-lg px-4 py-1 rounded-md shadow">
+            {projectName} Timeline
+          </div>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" onClick={() => handlePan('left')}>
               <ChevronLeft className="h-4 w-4" />
@@ -260,3 +263,5 @@ export default function GanttChart({ tasks }: GanttChartProps) {
     </TooltipProvider>
   );
 }
+
+    
