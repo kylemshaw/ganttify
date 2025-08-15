@@ -10,45 +10,14 @@ import type { Task, RawTask } from '@/lib/types';
 import { Upload, X, FileText, GanttChartSquare } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Label } from '../ui/label';
+import { processTasks, toTitleCase } from '@/lib/task-utils';
+
 
 interface CsvUploaderProps {
   onDataUploaded: (tasks: Task[], projectName: string) => void;
   onClear: () => void;
   hasData: boolean;
 }
-
-const addWorkingDays = (startDate: Date, duration: number): Date => {
-  let currentDate = new Date(startDate);
-  let daysAdded = 0;
-  // We subtract 1 from duration because the start date itself counts as the first day.
-  let remainingDuration = duration - 1;
-
-  if (remainingDuration < 0) return startDate;
-
-  while(remainingDuration > 0) {
-    currentDate = addDays(currentDate, 1);
-    const dayOfWeek = getDay(currentDate);
-    // 0 is Sunday, 6 is Saturday
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      remainingDuration--;
-    }
-  }
-
-  return currentDate;
-}
-
-// Recalculates the actual calendar duration based on the new end date
-const getCalendarDuration = (startDate: Date, endDate: Date): number => {
-  // differenceInDays is exclusive of the last day, so we add 1
-  return Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-}
-
-const toTitleCase = (str: string) => {
-  return str.replace(/[-_]/g, ' ').replace(/\w\S*/g, (txt) => {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-  });
-};
-
 
 export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUploaderProps) {
   const { toast } = useToast();
@@ -107,7 +76,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
     const headerLine = lines.shift()?.trim();
     if (!headerLine) throw new Error('CSV is empty or has no header.');
     
-    const header = headerLine.split(',');
+    const header = headerLine.split(',').map(h => h.trim());
     const hasIdColumn = header.includes('id');
 
     if (!header.includes('title') || !header.includes('startDate') || !header.includes('duration')) {
@@ -131,14 +100,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         if (isNaN(startDate.getTime())) {
             throw new Error(`Invalid date format on line ${index + 2}. Use YYYY-MM-DD.`);
         }
-        // Adjust start date to be the next weekday if it's on a weekend.
-        let dayOfWeek = getDay(startDate);
-        if (dayOfWeek === 0) { // Sunday
-            startDate = addDays(startDate, 1);
-        } else if (dayOfWeek === 6) { // Saturday
-            startDate = addDays(startDate, 2);
-        }
-
+        
         const duration = parseInt(durationStr, 10);
         if (isNaN(duration) || duration <= 0) {
             throw new Error(`Invalid duration on line ${index + 2}. Must be a positive number.`);
@@ -147,8 +109,8 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
         
         return {
-            id: hasIdColumn && id ? id : title,
-            title,
+            id: hasIdColumn && id ? id.trim() : title.trim(),
+            title: title.trim(),
             startDate,
             workingDuration: duration,
             dependencies,
@@ -156,108 +118,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         };
     });
 
-    const taskMap = new Map<string, Task>();
-    const orderedTasks: Task[] = [];
-    const resourceEndDates = new Map<string, Date>();
-
-    // First pass: Validate dependencies and create initial tasks
-    const rawTaskMap = new Map(rawTasks.map(t => [t.title, t]));
-    for (const rawTask of rawTasks) {
-        for (const depTitle of rawTask.dependencies) {
-            if (!rawTaskMap.has(depTitle)) {
-                throw new Error(`Dependency '${depTitle}' for task '${rawTask.title}' not found in the CSV.`);
-            }
-        }
-    }
-    
-    const titleToIdMap = new Map(rawTasks.map(t => [t.title, t.id]));
-
-    // Process tasks in an order that respects dependencies
-    const processed = new Set<string>();
-    let changedInPass = true;
-    while(orderedTasks.length < rawTasks.length && changedInPass) {
-        changedInPass = false;
-        for(const rawTask of rawTasks) {
-            if(processed.has(rawTask.id)) continue;
-
-            const dependenciesMet = rawTask.dependencies.every(depTitle => {
-                const depId = titleToIdMap.get(depTitle);
-                // The dependency is met if its ID is in the processed set.
-                // We find the ID by looking up the dependency title.
-                return depId ? processed.has(depId) : false;
-            });
-
-            if(dependenciesMet) {
-                let effectiveStartDate = rawTask.startDate;
-
-                // Check dependency constraints
-                if (rawTask.dependencies.length > 0) {
-                    const dependencyEndDates = rawTask.dependencies
-                        .map(depTitle => {
-                            const depId = titleToIdMap.get(depTitle);
-                            return depId ? taskMap.get(depId)?.endDate : undefined;
-                        })
-                        .filter((d): d is Date => !!d);
-
-                    if (dependencyEndDates.length > 0) {
-                        const latestDependencyEndDate = dateMax(dependencyEndDates);
-                        const dayAfterDependency = addDays(latestDependencyEndDate, 1);
-                        effectiveStartDate = dateMax([effectiveStartDate, dayAfterDependency]);
-                    }
-                }
-                
-                // Check resource constraints
-                if (rawTask.resource) {
-                  const lastResourceTaskEndDate = resourceEndDates.get(rawTask.resource);
-                  if (lastResourceTaskEndDate) {
-                    const dayAfterResourceFreed = addDays(lastResourceTaskEndDate, 1);
-                    effectiveStartDate = dateMax([effectiveStartDate, dayAfterResourceFreed]);
-                  }
-                }
-                
-                // Adjust start date if it falls on a weekend
-                let dayOfWeek = getDay(effectiveStartDate);
-                if (dayOfWeek === 0) { // Sunday
-                    effectiveStartDate = addDays(effectiveStartDate, 1);
-                } else if (dayOfWeek === 6) { // Saturday
-                    effectiveStartDate = addDays(effectiveStartDate, 2);
-                }
-                
-                const endDate = addWorkingDays(effectiveStartDate, rawTask.workingDuration);
-                
-                const finalTask: Task = {
-                    ...rawTask,
-                    startDate: effectiveStartDate,
-                    endDate: endDate,
-                    duration: getCalendarDuration(effectiveStartDate, endDate),
-                };
-                
-                taskMap.set(finalTask.id, finalTask);
-                orderedTasks.push(finalTask);
-                if (finalTask.resource) {
-                  resourceEndDates.set(finalTask.resource, endDate);
-                }
-                processed.add(finalTask.id);
-                changedInPass = true;
-            }
-        }
-    }
-
-    if (orderedTasks.length < rawTasks.length) {
-        const unprocessed = rawTasks.filter(t => !processed.has(t.id)).map(t => t.id).join(', ');
-        throw new Error(`Circular dependency detected or invalid dependency structure. Could not process tasks: ${unprocessed}`);
-    }
-
-    orderedTasks.sort((a, b) => {
-        const resourceA = a.resource || '';
-        const resourceB = b.resource || '';
-        if (resourceA < resourceB) return -1;
-        if (resourceA > resourceB) return 1;
-        // If resources are the same, maintain original order (or sort by start date)
-        return a.startDate.getTime() - b.startDate.getTime();
-    });
-
-    return orderedTasks;
+    return processTasks(rawTasks);
   };
 
   return (
@@ -270,13 +131,13 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
             <p>Your CSV file must include a header row with the following columns:</p>
             <ul className="list-disc pl-5 space-y-1 text-sm">
                 <li><strong className="text-foreground">title:</strong> The name of the task.</li>
-                <li><strong className="text-foreground">startDate:</strong> The task's start date in <code className="font-mono">YYYY-MM-DD</code> format.</li>
+                <li><strong className="text-foreground">startDate:</strong> The task's start date in <code className="font-mono bg-muted/50 p-0.5 rounded">YYYY-MM-DD</code> format.</li>
                 <li><strong className="text-foreground">duration:</strong> The number of working days for the task (weekends are skipped).</li>
             </ul>
             <p>Optional columns include:</p>
             <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li><strong className="text-foreground">id:</strong> A unique identifier for the task.</li>
-                <li><strong className="text-foreground">dependencies:</strong> A semicolon-separated list of task titles that must be completed before this task can start.</li>
+                <li><strong className="text-foreground">id:</strong> A unique identifier for the task. If not provided, the title will be used as the ID.</li>
+                <li><strong className="text-foreground">dependencies:</strong> A semicolon-separated list of task <strong className="text-foreground">titles</strong> that must be completed before this task can start.</li>
                 <li><strong className="text-foreground">resource:</strong> The name of the person or resource assigned to the task.</li>
             </ul>
           </div>
@@ -322,3 +183,5 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
     </div>
   );
 }
+
+    

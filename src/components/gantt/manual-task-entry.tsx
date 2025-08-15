@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,8 +12,8 @@ import { Calendar as CalendarIcon, GanttChartSquare, Plus, Trash2 } from 'lucide
 import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { addWorkingDays, getCalendarDuration, toTitleCase, processTasks } from '@/lib/task-utils';
-import type { Task } from '@/lib/types';
+import { processTasks } from '@/lib/task-utils';
+import type { Task, RawTask } from '@/lib/types';
 
 
 interface ManualTask {
@@ -51,7 +51,7 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
     setRows(rows.filter(row => row.id !== id));
   };
 
-  const handleRowChange = (id: string, field: keyof ManualTask, value: string) => {
+  const handleRowChange = (id: string, field: keyof Omit<ManualTask, 'id'>, value: string) => {
     setRows(rows.map(row => row.id === id ? { ...row, [field]: value } : row));
   };
 
@@ -66,26 +66,26 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
     }
     
     try {
-       const rawTasks = rows.map((row, index) => {
+       const rawTasks: RawTask[] = rows.map((row, index) => {
         if (!row.title || !row.startDate || !row.duration) {
-            throw new Error(`Invalid data on line ${index + 1}. Each task must have a title, startDate, and duration.`);
+            throw new Error(`Invalid data on row ${index + 1}. Each task must have a title, startDate, and duration.`);
         }
 
         let startDate = parse(row.startDate, 'yyyy-MM-dd', new Date());
         if (isNaN(startDate.getTime())) {
-            throw new Error(`Invalid date format on line ${index + 1}. Use YYYY-MM-DD.`);
+            throw new Error(`Invalid date format on row ${index + 1}. Use YYYY-MM-DD.`);
         }
         
         const duration = parseInt(row.duration, 10);
         if (isNaN(duration) || duration <= 0) {
-            throw new Error(`Invalid duration on line ${index + 1}. Must be a positive number.`);
+            throw new Error(`Invalid duration on row ${index + 1}. Must be a positive number.`);
         }
 
         const dependencies = row.dependencies?.trim() ? row.dependencies.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
         
         return {
-            id: row.title, // Use title as ID for dependency linking
-            title: row.title,
+            id: row.title, // Use title as ID for dependency linking and uniqueness
+            title: row.title.trim(),
             startDate,
             workingDuration: duration,
             dependencies,
@@ -127,7 +127,7 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Start Date</TableHead>
-              <TableHead>Duration</TableHead>
+              <TableHead className="w-[100px]">Duration</TableHead>
               <TableHead>Dependencies</TableHead>
               <TableHead>Resource</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -170,6 +170,7 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
                     value={row.duration} 
                     onChange={e => handleRowChange(row.id, 'duration', e.target.value)}
                     min="1"
+                    placeholder='Days'
                   />
                 </TableCell>
                  <TableCell>
@@ -196,7 +197,7 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
           </TableBody>
         </Table>
       </div>
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center mt-4">
         <Button variant="outline" onClick={handleAddRow}>
             <Plus className="mr-2" />
             Add Task
@@ -210,3 +211,4 @@ export default function ManualTaskEntry({ onDataUploaded }: ManualTaskEntryProps
   );
 }
 
+    

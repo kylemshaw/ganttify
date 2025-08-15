@@ -4,9 +4,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { Task } from '@/lib/types';
 import CsvUploader from '@/components/gantt/csv-uploader';
+import ManualTaskEntry from '@/components/gantt/manual-task-entry';
 import GanttChart from '@/components/gantt/gantt-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GanttChartSquare, Upload, Download, User, Calendar as CalendarIcon, Briefcase, CheckCircle, Clock } from 'lucide-react';
+import { GanttChartSquare, Upload, Download, User, Calendar as CalendarIcon, Briefcase, CheckCircle, Clock, Plus } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore, getYear } from 'date-fns';
@@ -44,6 +45,7 @@ export default function Home() {
   const [projectName, setProjectName] = useState('Ganttify');
   const [key, setKey] = useState(Date.now()); // To re-render chart on new upload
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function Home() {
     setProjectName(name);
     setKey(Date.now()); // Force re-mount of GanttChart to reset its internal state
     setIsUploaderOpen(false); // Close sheet on successful upload
+    setIsManualEntryOpen(false);
   };
   
   const handleClear = () => {
@@ -154,6 +157,8 @@ export default function Home() {
 
   }, [tasks, currentDate]);
 
+  const mainButtonText = tasks.length > 0 ? 'Upload New CSV' : 'Upload CSV';
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
       <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
@@ -169,11 +174,32 @@ export default function Home() {
                 Export CSV
               </Button>
             )}
+
+            <Sheet open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="mr-2" />
+                  Add Tasks
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-[800px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Add Tasks Manually</SheetTitle>
+                  <SheetDescription>
+                    Use the worksheet below to define your project tasks.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="py-4">
+                  <ManualTaskEntry onDataUploaded={handleDataUploaded} />
+                </div>
+              </SheetContent>
+            </Sheet>
+
             <Sheet open={isUploaderOpen} onOpenChange={setIsUploaderOpen}>
               <SheetTrigger asChild>
                 <Button>
                   <Upload className="mr-2" />
-                  {tasks.length > 0 ? 'Upload New' : 'Upload CSV'}
+                  {mainButtonText}
                 </Button>
               </SheetTrigger>
               <SheetContent>
@@ -188,6 +214,7 @@ export default function Home() {
                 </div>
               </SheetContent>
             </Sheet>
+
           </div>
         </div>
       </header>
@@ -202,7 +229,7 @@ export default function Home() {
                   <div className="text-center text-muted-foreground p-8">
                     <GanttChartSquare className="mx-auto h-16 w-16 mb-4 text-primary/50" />
                     <h2 className="text-xl font-semibold mb-2 text-foreground">Your Gantt Chart Awaits</h2>
-                    <p>Click "Upload CSV" to get started. The chart will dynamically appear here.</p>
+                    <p className="mb-4">Use "Add Tasks" to enter data manually or "Upload CSV" to get started.</p>
                     <div className="mt-4 text-sm text-left bg-background/50 p-4 rounded-md border">
                       <h3 className="font-semibold mb-2 text-foreground">CSV Format:</h3>
                       <code className="block whitespace-pre-wrap font-mono text-xs">
@@ -300,3 +327,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
