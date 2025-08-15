@@ -13,7 +13,7 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 40;
+const ROW_HEIGHT = 50;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
@@ -120,7 +120,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto overflow-y-hidden" ref={scrollContainerRef}>
+        <div className="overflow-x-auto" ref={scrollContainerRef}>
           <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: totalChartHeight }}>
             {/* Header */}
             <div className="sticky top-0 z-20 bg-background flex" style={{height: HEADER_HEIGHT}}>
@@ -135,13 +135,12 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                       <div 
                         key={day.toISOString()} 
                         className={cn(
-                          "flex flex-col items-center justify-center border-b border-r",
+                          "flex items-center justify-center border-b border-r text-center text-xs",
                           isMonthStart ? "border-l-2 border-primary/50" : ""
                         )}
                         style={{ width: dayCellWidth, height: HEADER_HEIGHT }}
                       >
-                         <div className="text-xs text-muted-foreground">{format(day, 'MMM')}</div>
-                         <div className="text-sm font-medium">{format(day, 'd')}</div>
+                         <div className="text-muted-foreground">{format(day, 'MMM d')}</div>
                       </div>
                     );
                   })}
@@ -150,14 +149,14 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             </div>
 
             {/* Content Area */}
-            <div className="relative" style={{ width: '100%', height: chartHeight }}>
+            <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight }}>
               {/* Task List */}
               <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
                 {tasks.map((task, index) => (
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
-                    style={{ height: ROW_HEIGHT, width: TASK_LIST_WIDTH }}
+                    style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
                   >
                     {task.title}
                   </div>
