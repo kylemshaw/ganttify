@@ -14,13 +14,13 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 35;
+const ROW_HEIGHT = 40;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
-const TASK_BAR_HEIGHT = 22;
+const TASK_BAR_HEIGHT = 28;
 const ARROW_HEAD_SIZE = 5;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
@@ -218,12 +218,24 @@ export default function GanttChart({ tasks }: GanttChartProps) {
 
                 {/* Task Bars & Dep Lines Container */}
                 <div className="absolute top-0 left-0 w-full h-full">
+                    {/* Dependency Arrows */}
+                    <svg width={chartWidth} height={chartHeight} className="absolute top-0 left-0 pointer-events-none z-0">
+                      <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                          <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--accent))" stroke="hsl(var(--accent))" />
+                        </marker>
+                      </defs>
+                      {dependencyLines.map(line => (
+                        <path key={line.key} d={line.d} stroke="hsl(var(--accent))" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
+                      ))}
+                    </svg>
+
                     {/* Task Bars */}
                     {tasksWithPositions.map((task) => (
                         <Tooltip key={task.id}>
                           <TooltipTrigger asChild>
                             <div
-                              className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
+                              className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200 z-10"
                               style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
@@ -238,18 +250,6 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                           </TooltipContent>
                         </Tooltip>
                     ))}
-                    
-                    {/* Dependency Arrows */}
-                    <svg width={chartWidth} height={chartHeight} className="absolute top-0 left-0 pointer-events-none">
-                      <defs>
-                        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                          <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--accent))" stroke="hsl(var(--accent))" />
-                        </marker>
-                      </defs>
-                      {dependencyLines.map(line => (
-                        <path key={line.key} d={line.d} stroke="hsl(var(--accent))" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
-                      ))}
-                    </svg>
                 </div>
               </div>
             </div>
