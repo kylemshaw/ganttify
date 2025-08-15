@@ -6,7 +6,7 @@ import { parse, addDays, max as dateMax, format, getDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Task } from '@/lib/types';
+import type { Task, RawTask } from '@/lib/types';
 import { Upload, X, FileText, GanttChartSquare } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Label } from '../ui/label';
@@ -104,41 +104,56 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
 
   const parseCsv = (csvText: string): Task[] => {
     const lines = csvText.trim().split('\n');
-    const header = lines.shift()?.trim().split(',');
+    const headerLine = lines.shift()?.trim();
+    if (!headerLine) throw new Error('CSV is empty or has no header.');
+    
+    const header = headerLine.split(',');
+    const hasIdColumn = header.includes('id');
 
-    if (!header || header.join(',') !== 'title,startDate,duration,dependencies,resource') {
-      throw new Error('Invalid CSV header. Expected: title,startDate,duration,dependencies,resource');
+    if (!header.includes('title') || !header.includes('startDate') || !header.includes('duration')) {
+        throw new Error('Invalid CSV header. It must contain "title", "startDate", and "duration".');
     }
 
-    const rawTasks = lines.map((line, index) => {
-      // CSV parsing can be tricky with commas in fields. A simple split is often not robust enough.
-      // For this app, we'll assume no commas in title, etc.
-      const [title, startDateStr, durationStr, dependenciesStr, resource] = line.trim().split(',');
-      if (!title || !startDateStr || !durationStr) {
-        throw new Error(`Invalid data on line ${index + 2}. Each task must have a title, startDate, and duration.`);
-      }
+    const rawTasks: RawTask[] = lines.map((line, index) => {
+        const values = line.trim().split(',');
+        const row: { [key: string]: string } = {};
+        header.forEach((h, i) => {
+            row[h] = values[i];
+        });
 
-      let startDate = parse(startDateStr, 'yyyy-MM-dd', new Date());
-      if (isNaN(startDate.getTime())) {
-        throw new Error(`Invalid date format on line ${index + 2}. Use YYYY-MM-DD.`);
-      }
-      // Adjust start date to be the next weekday if it's on a weekend.
-      let dayOfWeek = getDay(startDate);
-      if (dayOfWeek === 0) { // Sunday
-          startDate = addDays(startDate, 1);
-      } else if (dayOfWeek === 6) { // Saturday
-          startDate = addDays(startDate, 2);
-      }
+        const { id, title, startDate: startDateStr, duration: durationStr, dependencies: dependenciesStr, resource } = row;
 
+        if (!title || !startDateStr || !durationStr) {
+            throw new Error(`Invalid data on line ${index + 2}. Each task must have a title, startDate, and duration.`);
+        }
 
-      const duration = parseInt(durationStr, 10);
-      if (isNaN(duration) || duration <= 0) {
-        throw new Error(`Invalid duration on line ${index + 2}. Must be a positive number.`);
-      }
+        let startDate = parse(startDateStr, 'yyyy-MM-dd', new Date());
+        if (isNaN(startDate.getTime())) {
+            throw new Error(`Invalid date format on line ${index + 2}. Use YYYY-MM-DD.`);
+        }
+        // Adjust start date to be the next weekday if it's on a weekend.
+        let dayOfWeek = getDay(startDate);
+        if (dayOfWeek === 0) { // Sunday
+            startDate = addDays(startDate, 1);
+        } else if (dayOfWeek === 6) { // Saturday
+            startDate = addDays(startDate, 2);
+        }
 
-      const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
-      
-      return { id: title, title, startDate, workingDuration: duration, dependencies, resource: resource?.trim() };
+        const duration = parseInt(durationStr, 10);
+        if (isNaN(duration) || duration <= 0) {
+            throw new Error(`Invalid duration on line ${index + 2}. Must be a positive number.`);
+        }
+
+        const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
+        
+        return {
+            id: hasIdColumn && id ? id : title,
+            title,
+            startDate,
+            workingDuration: duration,
+            dependencies,
+            resource: resource?.trim()
+        };
     });
 
     const taskMap = new Map<string, Task>();
@@ -204,7 +219,6 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
                     startDate: effectiveStartDate,
                     endDate: endDate,
                     duration: getCalendarDuration(effectiveStartDate, endDate),
-                    workingDuration: rawTask.workingDuration
                 };
                 
                 taskMap.set(finalTask.id, finalTask);
@@ -241,7 +255,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         <FileText className="h-4 w-4" />
         <AlertTitle>CSV Format Guide</AlertTitle>
         <AlertDescription>
-         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded).
+         Your CSV file must have a header. Required columns are <code className="font-mono text-sm">title,startDate,duration</code>. Optional columns are <code className="font-mono text-sm">id,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded).
         </AlertDescription>
       </Alert>
 

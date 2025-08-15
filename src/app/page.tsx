@@ -67,18 +67,27 @@ export default function Home() {
   const handleExport = () => {
     if (tasks.length === 0) return;
 
-    const header = 'title,startDate,duration,dependencies,resource\n';
+    const hasId = tasks.some(t => t.id && t.id !== t.title);
+    const header = hasId
+      ? 'id,title,startDate,duration,dependencies,resource\n'
+      : 'title,startDate,duration,dependencies,resource\n';
+
     const csvRows = tasks.map(task => {
       const title = `"${task.title.replace(/"/g, '""')}"`;
       const startDate = format(task.startDate, 'yyyy-MM-dd');
       const duration = task.workingDuration;
       const dependencies = `"${task.dependencies.join(';')}"`;
       const resource = task.resource ? `"${task.resource.replace(/"/g, '""')}"` : '';
+
+      if (hasId) {
+        const id = task.id ? `"${task.id.replace(/"/g, '""')}"` : '';
+        return [id, title, startDate, duration, dependencies, resource].join(',');
+      }
       return [title, startDate, duration, dependencies, resource].join(',');
     });
 
     const csvContent = header + csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-t;' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.href) {
       URL.revokeObjectURL(link.href);
@@ -291,5 +300,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
