@@ -14,7 +14,7 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 30;
+const ROW_HEIGHT = 35;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
@@ -69,7 +69,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
             const startY = dependencyTask.top + TASK_BAR_HEIGHT;
             
-            const endX = task.left - ARROW_HEAD_SIZE;
+            const endX = task.left - ARROW_HEAD_SIZE - 2;
             const endY = task.top + TASK_BAR_HEIGHT / 2;
   
             const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
@@ -151,7 +151,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <div 
                           key={day.toISOString()} 
                           className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
-                            "bg-muted/75": isWeekend,
+                            "bg-muted": isWeekend,
                           })}
                           style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
                         >
@@ -199,7 +199,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                       <div 
                         key={day.toISOString()} 
                         className={cn("absolute top-0 h-full border-r", {
-                          "bg-muted/50": isWeekend,
+                          "bg-muted/75": isWeekend,
                         })}
                         style={{ 
                           left: index * dayCellWidth, 
