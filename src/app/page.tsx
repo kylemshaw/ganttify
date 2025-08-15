@@ -88,13 +88,9 @@ export default function Home() {
     document.body.removeChild(link);
   };
 
-  const { resourceSummary, calendarRange } = useMemo(() => {
+  const resourceSummary = useMemo(() => {
     if (tasks.length === 0 || !currentDate) {
-      const today = new Date();
-      return { 
-        resourceSummary: null, 
-        calendarRange: { fromYear: getYear(today) - 5, toYear: getYear(today) + 5 } 
-      };
+      return null;
     }
 
     const summary = new Map<string, ResourceSummary>();
@@ -142,13 +138,7 @@ export default function Home() {
     
     const finalSummary = [...sortedSummary, projectSummary];
     
-    const fromYear = getYear(projectStartDate);
-    const toYear = getYear(projectEndDate);
-
-    return { 
-      resourceSummary: finalSummary, 
-      calendarRange: { fromYear, toYear }
-    };
+    return finalSummary;
 
   }, [tasks, currentDate]);
 
@@ -247,9 +237,6 @@ export default function Home() {
                       selected={currentDate || undefined}
                       onSelect={(date) => date && setCurrentDate(date)}
                       initialFocus
-                      captionLayout="dropdown-buttons"
-                      fromYear={calendarRange.fromYear}
-                      toYear={calendarRange.toYear}
                     />
                   </PopoverContent>
                 </Popover>
