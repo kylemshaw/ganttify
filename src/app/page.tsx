@@ -7,13 +7,15 @@ import CsvUploader from '@/components/gantt/csv-uploader';
 import ManualTaskEntry from '@/components/gantt/manual-task-entry';
 import GanttChart from '@/components/gantt/gantt-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GanttChartSquare, Upload, Download, User, Calendar as CalendarIcon, Briefcase, CheckCircle, Clock, Plus } from 'lucide-react';
+import { GanttChartSquare, Upload, Download, User, Calendar as CalendarIcon, Briefcase, CheckCircle, Clock, Plus, Settings } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore, getYear } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -48,13 +50,19 @@ export default function Home() {
   const [key, setKey] = useState(Date.now()); // To re-render chart on new upload
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
+  const [tempProjectName, setTempProjectName] = useState(projectName);
   const { toast } = useToast();
 
   useEffect(() => {
     // Set current date on client-side to avoid hydration mismatch
     setCurrentDate(new Date());
   }, []);
+
+  useEffect(() => {
+    setTempProjectName(projectName);
+  }, [projectName, isSettingsOpen]);
 
   const handleDataUploaded = (newTasks: Task[], name: string) => {
     setTasks(newTasks);
@@ -106,6 +114,23 @@ export default function Home() {
     setTasks([]);
     setProjectName('Ganttify');
     setIsUploaderOpen(false);
+  }
+
+  const handleProjectNameSave = () => {
+    if(tempProjectName.trim()) {
+        setProjectName(tempProjectName.trim());
+        setIsSettingsOpen(false);
+        toast({
+            title: "Project Renamed",
+            description: `Your project is now called "${tempProjectName.trim()}".`
+        });
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Invalid Name",
+            description: "Project name cannot be empty."
+        });
+    }
   }
 
   const handleExport = () => {
@@ -210,10 +235,38 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             {tasks.length > 0 && (
-              <Button onClick={handleExport} variant="outline">
-                <Download className="mr-2" />
-                Export CSV
-              </Button>
+              <>
+                <Button onClick={handleExport} variant="outline">
+                  <Download className="mr-2" />
+                  Export CSV
+                </Button>
+                 <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                  <DialogTrigger asChild>
+                     <Button variant="ghost" size="icon">
+                        <Settings />
+                     </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Project Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="project-name-input" className="text-right">Name</Label>
+                            <Input 
+                                id="project-name-input"
+                                value={tempProjectName}
+                                onChange={(e) => setTempProjectName(e.target.value)}
+                                className="col-span-3"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleProjectNameSave}>Save Changes</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
 
             <Sheet open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
@@ -279,6 +332,7 @@ export default function Home() {
                         Task B,2024-08-08,4,Task A,Resource 2<br/>
                         Task C,2024-08-08,6,Task A,Resource 1
                       </code>
+                       <p className="mt-2">The <code className='font-mono bg-muted/50 p-0.5 rounded'>id</code> column is optional.</p>
                     </div>
                   </div>
                 </div>
