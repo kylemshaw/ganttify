@@ -108,7 +108,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
 
       const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
       
-      return { id: title, title, startDate, duration, dependencies, resource: resource?.trim() };
+      return { id: title, title, startDate, workingDuration: duration, dependencies, resource: resource?.trim() };
     });
 
     const taskMap = new Map<string, Task>();
@@ -167,13 +167,14 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
                     effectiveStartDate = addDays(effectiveStartDate, 2);
                 }
                 
-                const endDate = addWorkingDays(effectiveStartDate, rawTask.duration);
+                const endDate = addWorkingDays(effectiveStartDate, rawTask.workingDuration);
                 
                 const finalTask: Task = {
                     ...rawTask,
                     startDate: effectiveStartDate,
                     endDate: endDate,
-                    duration: getCalendarDuration(effectiveStartDate, endDate)
+                    duration: getCalendarDuration(effectiveStartDate, endDate),
+                    workingDuration: rawTask.workingDuration
                 };
                 
                 taskMap.set(finalTask.id, finalTask);

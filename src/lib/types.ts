@@ -3,7 +3,8 @@ export interface Task {
   title: string;
   startDate: Date;
   endDate: Date;
-  duration: number;
+  duration: number; // calendar days
+  workingDuration: number; // working days
   dependencies: string[];
   resource?: string;
 }

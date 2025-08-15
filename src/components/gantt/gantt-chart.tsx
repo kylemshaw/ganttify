@@ -173,7 +173,11 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                     className="p-2 border-r border-b truncate text-sm flex items-center justify-between"
                     style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
                   >
-                    <span className="font-medium truncate">{task.title}</span>
+                    <div className='flex items-center gap-2'>
+                        <span className="font-medium truncate">{task.title}</span>
+                        <span className="text-muted-foreground">{task.workingDuration} days</span>
+                    </div>
+
                     {task.resource && (
                       <Badge variant="secondary" className="gap-1.5 shrink-0">
                         <User className="w-3 h-3" />
@@ -230,7 +234,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                             {task.resource && <p>Resource: {task.resource}</p>}
                             <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
                             {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
-                            <p>Duration: {task.duration} days (incl. weekends)</p>
+                            <p>Duration: {task.workingDuration} working days</p>
                           </TooltipContent>
                         </Tooltip>
                     ))}
