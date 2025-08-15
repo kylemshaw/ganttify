@@ -66,13 +66,13 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT;
+            const startX = dependencyTask.left + dependencyTask.width;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT / 2;
             
             const endX = task.left - ARROW_HEAD_SIZE - 2;
             const endY = task.top + TASK_BAR_HEIGHT / 2;
   
-            const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
+            const d = `M ${startX} ${startY} H ${endX}`;
             lines.push({ key: `${depId}-${task.id}`, d });
           }
         });
@@ -151,7 +151,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <div 
                           key={day.toISOString()} 
                           className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
-                            "bg-muted": isWeekend,
+                            "bg-muted/75": isWeekend,
                           })}
                           style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
                         >
@@ -235,7 +235,10 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <Tooltip key={task.id}>
                           <TooltipTrigger asChild>
                             <div
-                              className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200 z-10"
+                              className={cn("absolute rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200 z-10", {
+                                "bg-primary/80 hover:bg-primary": task.type === 'work',
+                                "bg-accent/80 hover:bg-accent": task.type === 'timeoff',
+                              })}
                               style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
@@ -247,6 +250,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                             <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
                             {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
                             <p>Duration: {task.workingDuration} working days</p>
+                            <p>Type: {task.type}</p>
                           </TooltipContent>
                         </Tooltip>
                     ))}

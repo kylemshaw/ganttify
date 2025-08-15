@@ -7,4 +7,5 @@ export interface Task {
   workingDuration: number; // working days
   dependencies: string[];
   resource?: string;
+  type: 'work' | 'timeoff';
 }
