@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { GanttChartSquare, Upload, Download, User, Calendar as CalendarIcon, Briefcase, CheckCircle, Clock } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore } from 'date-fns';
+import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore, getYear } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from '@/components/ui/label';
@@ -88,8 +88,14 @@ export default function Home() {
     document.body.removeChild(link);
   };
 
-  const resourceSummary = useMemo(() => {
-    if (tasks.length === 0 || !currentDate) return null;
+  const { resourceSummary, calendarRange } = useMemo(() => {
+    if (tasks.length === 0 || !currentDate) {
+      const today = new Date();
+      return { 
+        resourceSummary: null, 
+        calendarRange: { fromYear: getYear(today) - 5, toYear: getYear(today) + 5 } 
+      };
+    }
 
     const summary = new Map<string, ResourceSummary>();
 
@@ -133,8 +139,16 @@ export default function Home() {
       totalWorkingDays: projectTotalDays,
       completedWorkingDays: projectCompletedDays
     }];
+    
+    const finalSummary = [...sortedSummary, projectSummary];
+    
+    const fromYear = getYear(projectStartDate);
+    const toYear = getYear(projectEndDate);
 
-    return [...sortedSummary, projectSummary];
+    return { 
+      resourceSummary: finalSummary, 
+      calendarRange: { fromYear, toYear }
+    };
 
   }, [tasks, currentDate]);
 
@@ -233,6 +247,9 @@ export default function Home() {
                       selected={currentDate || undefined}
                       onSelect={(date) => date && setCurrentDate(date)}
                       initialFocus
+                      captionLayout="dropdown-buttons"
+                      fromYear={calendarRange.fromYear}
+                      toYear={calendarRange.toYear}
                     />
                   </PopoverContent>
                 </Popover>
