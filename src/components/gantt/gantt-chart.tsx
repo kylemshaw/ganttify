@@ -13,12 +13,13 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 50;
+const ROW_HEIGHT = 60;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
-const HEADER_HEIGHT = 48;
+const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
+const BEND_OFFSET = 15;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
   const [dayCellWidth, setDayCellWidth] = useState(DAY_CELL_WIDTH_DEFAULT);
@@ -62,13 +63,15 @@ export default function GanttChart({ tasks }: GanttChartProps) {
         task.dependencies.forEach(depId => {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
-            const barHeight = ROW_HEIGHT - 8;
+            const barHeight = ROW_HEIGHT - 12;
             const startX = dependencyTask.left + dependencyTask.width;
             const startY = dependencyTask.top + barHeight / 2;
             const endX = task.left;
             const endY = task.top + barHeight / 2;
             
-            const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
+            const midX = startX + BEND_OFFSET;
+
+            const d = `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
 
             lines.push({ key: `${depId}-${task.id}`, d });
           }
@@ -76,7 +79,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
       }
     });
     return lines;
-  }, [tasksWithPositions]);
+  }, [tasksWithPositions, dayCellWidth]);
 
 
   const handleZoom = (direction: 'in' | 'out') => {
@@ -95,9 +98,14 @@ export default function GanttChart({ tasks }: GanttChartProps) {
   
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollLeft = 0;
+      const todayIndex = differenceInDays(new Date(), chartStartDate);
+      if (todayIndex > 0 && todayIndex < days.length) {
+        scrollContainerRef.current.scrollLeft = (todayIndex * dayCellWidth) - (scrollContainerRef.current.clientWidth / 2);
+      } else {
+        scrollContainerRef.current.scrollLeft = 0;
+      }
     }
-  }, [tasks]);
+  }, [tasks, chartStartDate, dayCellWidth, days.length]);
 
   const chartWidth = days.length * dayCellWidth;
   const chartHeight = tasks.length * ROW_HEIGHT;
@@ -155,7 +163,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight }}>
               {/* Task List */}
               <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
-                {tasksWithPositions.map((task) => (
+                {tasksWithPositions.map((task, index) => (
                   <div 
                     key={task.id} 
                     className="p-2 border-r border-b truncate text-sm font-medium flex items-center"
@@ -196,7 +204,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                           <TooltipTrigger asChild>
                             <div
                               className="absolute bg-primary/80 hover:bg-primary rounded-md my-1.5 mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top, left: task.left, width: task.width, height: ROW_HEIGHT - 8 }}
+                              style={{ top: task.top, left: task.left, width: task.width, height: ROW_HEIGHT - 12 }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
