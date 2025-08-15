@@ -182,6 +182,8 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
 
             const dependenciesMet = rawTask.dependencies.every(depTitle => {
                 const depId = titleToIdMap.get(depTitle);
+                // The dependency is met if its ID is in the processed set.
+                // We find the ID by looking up the dependency title.
                 return depId ? processed.has(depId) : false;
             });
 
@@ -264,7 +266,20 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         <FileText className="h-4 w-4" />
         <AlertTitle>CSV Format Guide</AlertTitle>
         <AlertDescription>
-         Your CSV file must have a header. Required columns are <code className="font-mono text-sm">title,startDate,duration</code>. Optional columns are <code className="font-mono text-sm">id,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded).
+          <div className="space-y-2 text-foreground/80">
+            <p>Your CSV file must include a header row with the following columns:</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li><strong className="text-foreground">title:</strong> The name of the task.</li>
+                <li><strong className="text-foreground">startDate:</strong> The task's start date in <code className="font-mono">YYYY-MM-DD</code> format.</li>
+                <li><strong className="text-foreground">duration:</strong> The number of working days for the task (weekends are skipped).</li>
+            </ul>
+            <p>Optional columns include:</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li><strong className="text-foreground">id:</strong> A unique identifier for the task.</li>
+                <li><strong className="text-foreground">dependencies:</strong> A semicolon-separated list of task titles that must be completed before this task can start.</li>
+                <li><strong className="text-foreground">resource:</strong> The name of the person or resource assigned to the task.</li>
+            </ul>
+          </div>
         </AlertDescription>
       </Alert>
 
