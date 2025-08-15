@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ChangeEvent } from 'react';
-import { parse, addDays, max as dateMax, format } from 'date-fns';
+import { parse, addDays, max as dateMax, format, getDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +13,32 @@ interface CsvUploaderProps {
   onDataUploaded: (tasks: Task[]) => void;
   onClear: () => void;
   hasData: boolean;
+}
+
+const addWorkingDays = (startDate: Date, duration: number): Date => {
+  let currentDate = new Date(startDate);
+  let daysAdded = 0;
+  // We subtract 1 from duration because the start date itself counts as the first day.
+  let remainingDuration = duration - 1;
+
+  if (remainingDuration < 0) return startDate;
+
+  while(remainingDuration > 0) {
+    currentDate = addDays(currentDate, 1);
+    const dayOfWeek = getDay(currentDate);
+    // 0 is Sunday, 6 is Saturday
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      remainingDuration--;
+    }
+  }
+
+  return currentDate;
+}
+
+// Recalculates the actual calendar duration based on the new end date
+const getCalendarDuration = (startDate: Date, endDate: Date): number => {
+  // differenceInDays is exclusive of the last day, so we add 1
+  return Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 }
 
 export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUploaderProps) {
@@ -62,10 +88,18 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         throw new Error(`Invalid data on line ${index + 2}. Each task must have a title, startDate, and duration.`);
       }
 
-      const startDate = parse(startDateStr, 'yyyy-MM-dd', new Date());
+      let startDate = parse(startDateStr, 'yyyy-MM-dd', new Date());
       if (isNaN(startDate.getTime())) {
         throw new Error(`Invalid date format on line ${index + 2}. Use YYYY-MM-DD.`);
       }
+      // Adjust start date to be the next weekday if it's on a weekend.
+      let dayOfWeek = getDay(startDate);
+      if (dayOfWeek === 0) { // Sunday
+          startDate = addDays(startDate, 1);
+      } else if (dayOfWeek === 6) { // Saturday
+          startDate = addDays(startDate, 2);
+      }
+
 
       const duration = parseInt(durationStr, 10);
       if (isNaN(duration) || duration <= 0) {
@@ -125,12 +159,21 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
                   }
                 }
                 
-                const endDate = addDays(effectiveStartDate, rawTask.duration - 1);
+                // Adjust start date if it falls on a weekend
+                let dayOfWeek = getDay(effectiveStartDate);
+                if (dayOfWeek === 0) { // Sunday
+                    effectiveStartDate = addDays(effectiveStartDate, 1);
+                } else if (dayOfWeek === 6) { // Saturday
+                    effectiveStartDate = addDays(effectiveStartDate, 2);
+                }
+                
+                const endDate = addWorkingDays(effectiveStartDate, rawTask.duration);
                 
                 const finalTask: Task = {
                     ...rawTask,
                     startDate: effectiveStartDate,
                     endDate: endDate,
+                    duration: getCalendarDuration(effectiveStartDate, endDate)
                 };
                 
                 taskMap.set(finalTask.id, finalTask);
@@ -158,7 +201,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         <FileText className="h-4 w-4" />
         <AlertTitle>CSV Format Guide</AlertTitle>
         <AlertDescription>
-         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;).
+         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded).
         </AlertDescription>
       </Alert>
       <div className="flex flex-col sm:flex-row gap-2">

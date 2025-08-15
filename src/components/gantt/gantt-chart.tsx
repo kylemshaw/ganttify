@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Task } from '@/lib/types';
-import { addDays, differenceInDays, format, eachDayOfInterval, min, max } from 'date-fns';
+import { addDays, differenceInDays, format, eachDayOfInterval, min, max, getDay } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, User } from 'lucide-react';
@@ -145,13 +145,13 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               <div className="overflow-hidden">
                 <div className="flex" style={{ width: chartWidth }}>
                   {days.map((day) => {
-                      const dayOfWeek = day.getDay();
+                      const dayOfWeek = getDay(day);
                       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                       return (
                         <div 
                           key={day.toISOString()} 
                           className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
-                            "bg-muted": isWeekend,
+                            "bg-muted/75": isWeekend,
                           })}
                           style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
                         >
@@ -189,7 +189,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
                   {days.map((day, index) => {
-                    const dayOfWeek = day.getDay();
+                    const dayOfWeek = getDay(day);
                     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                     return (
                       <div 
@@ -230,7 +230,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                             {task.resource && <p>Resource: {task.resource}</p>}
                             <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
                             {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
-                            <p>Duration: {task.duration} days</p>
+                            <p>Duration: {task.duration} days (incl. weekends)</p>
                           </TooltipContent>
                         </Tooltip>
                     ))}
