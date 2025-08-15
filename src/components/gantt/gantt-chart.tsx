@@ -13,14 +13,14 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 60;
+const ROW_HEIGHT = 35;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
 const BEND_OFFSET = 15;
-const TASK_BAR_HEIGHT = 40;
+const TASK_BAR_HEIGHT = 35;
 const ARROW_HEAD_SIZE = 5;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
@@ -67,14 +67,12 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + (ROW_HEIGHT + TASK_BAR_HEIGHT) / 2;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT;
             
             const endX = task.left - ARROW_HEAD_SIZE;
-            const endY = task.top + ROW_HEIGHT / 2;
+            const endY = task.top + TASK_BAR_HEIGHT / 2;
   
-            const intermediateY = endY;
-
-            const d = `M ${startX} ${startY} V ${intermediateY} H ${endX}`;
+            const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
             lines.push({ key: `${depId}-${task.id}`, d });
           }
         });
@@ -204,7 +202,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                           <TooltipTrigger asChild>
                             <div
                               className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top + (ROW_HEIGHT - TASK_BAR_HEIGHT)/2, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
+                              style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
