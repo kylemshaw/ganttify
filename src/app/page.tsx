@@ -30,15 +30,14 @@ export default function Home() {
   const handleExport = () => {
     if (tasks.length === 0) return;
 
-    const header = 'title,startDate,duration,dependencies,resource,type\n';
+    const header = 'title,startDate,duration,dependencies,resource\n';
     const csvRows = tasks.map(task => {
       const title = `"${task.title.replace(/"/g, '""')}"`;
       const startDate = format(task.startDate, 'yyyy-MM-dd');
       const duration = task.workingDuration;
       const dependencies = `"${task.dependencies.join(';')}"`;
       const resource = task.resource ? `"${task.resource.replace(/"/g, '""')}"` : '';
-      const type = task.type;
-      return [title, startDate, duration, dependencies, resource, type].join(',');
+      return [title, startDate, duration, dependencies, resource].join(',');
     });
 
     const csvContent = header + csvRows.join('\n');
@@ -107,11 +106,10 @@ export default function Home() {
                     <div className="mt-4 text-sm text-left bg-background/50 p-4 rounded-md border">
                       <h3 className="font-semibold mb-2 text-foreground">CSV Format:</h3>
                       <code className="block whitespace-pre-wrap font-mono text-xs">
-                        title,startDate,duration,dependencies,resource,type<br/>
-                        Task A,2024-08-01,5,,Resource 1,work<br/>
-                        Task B,2024-08-08,4,Task A,Resource 2,work<br/>
-                        Task C,2024-08-08,6,Task A,Resource 1,work<br/>
-                        PTO,2024-08-15,5,,Resource 1,timeoff
+                        title,startDate,duration,dependencies,resource<br/>
+                        Task A,2024-08-01,5,,Resource 1<br/>
+                        Task B,2024-08-08,4,Task A,Resource 2<br/>
+                        Task C,2024-08-08,6,Task A,Resource 1
                       </code>
                     </div>
                   </div>

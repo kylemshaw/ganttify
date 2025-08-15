@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRef, type ChangeEvent } from 'react';
@@ -78,14 +79,14 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
     const lines = csvText.trim().split('\n');
     const header = lines.shift()?.trim().split(',');
 
-    if (!header || header.join(',') !== 'title,startDate,duration,dependencies,resource,type') {
-      throw new Error('Invalid CSV header. Expected: title,startDate,duration,dependencies,resource,type');
+    if (!header || header.join(',') !== 'title,startDate,duration,dependencies,resource') {
+      throw new Error('Invalid CSV header. Expected: title,startDate,duration,dependencies,resource');
     }
 
     const rawTasks = lines.map((line, index) => {
       // CSV parsing can be tricky with commas in fields. A simple split is often not robust enough.
       // For this app, we'll assume no commas in title, etc.
-      const [title, startDateStr, durationStr, dependenciesStr, resource, type] = line.trim().split(',');
+      const [title, startDateStr, durationStr, dependenciesStr, resource] = line.trim().split(',');
       if (!title || !startDateStr || !durationStr) {
         throw new Error(`Invalid data on line ${index + 2}. Each task must have a title, startDate, and duration.`);
       }
@@ -110,9 +111,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
 
       const dependencies = dependenciesStr?.trim() ? dependenciesStr.trim().split(';').map(d => d.trim()).filter(Boolean) : [];
       
-      const taskType = type?.trim() === 'timeoff' ? 'timeoff' : 'work';
-
-      return { id: title, title, startDate, workingDuration: duration, dependencies, resource: resource?.trim(), type: taskType };
+      return { id: title, title, startDate, workingDuration: duration, dependencies, resource: resource?.trim() };
     });
 
     const taskMap = new Map<string, Task>();
@@ -155,7 +154,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
                 }
                 
                 // Check resource constraints
-                if (rawTask.resource && rawTask.type === 'work') {
+                if (rawTask.resource) {
                   const lastResourceTaskEndDate = resourceEndDates.get(rawTask.resource);
                   if (lastResourceTaskEndDate) {
                     const dayAfterResourceFreed = addDays(lastResourceTaskEndDate, 1);
@@ -183,7 +182,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
                 
                 taskMap.set(finalTask.id, finalTask);
                 orderedTasks.push(finalTask);
-                if (finalTask.resource && finalTask.type === 'work') {
+                if (finalTask.resource) {
                   resourceEndDates.set(finalTask.resource, endDate);
                 }
                 processed.add(finalTask.id);
@@ -215,7 +214,7 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         <FileText className="h-4 w-4" />
         <AlertTitle>CSV Format Guide</AlertTitle>
         <AlertDescription>
-         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource,type</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded). The `type` column can be 'work' or 'timeoff'.
+         Your CSV file must have a header: <br/><code className="font-mono text-sm">title,startDate,duration,dependencies,resource</code>. Separate multiple dependencies with a semicolon (;). Duration is in working days (weekends are excluded).
         </AlertDescription>
       </Alert>
       <div className="flex flex-col sm:flex-row gap-2">

@@ -235,10 +235,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <Tooltip key={task.id}>
                           <TooltipTrigger asChild>
                             <div
-                              className={cn("absolute rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200 z-10", {
-                                "bg-primary/80 hover:bg-primary": task.type === 'work',
-                                "bg-accent/80 hover:bg-accent": task.type === 'timeoff',
-                              })}
+                              className="absolute rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200 z-10 bg-primary/80 hover:bg-primary"
                               style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
@@ -250,7 +247,6 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                             <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
                             {task.endDate && <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>}
                             <p>Duration: {task.workingDuration} working days</p>
-                            <p>Type: {task.type}</p>
                           </TooltipContent>
                         </Tooltip>
                     ))}
