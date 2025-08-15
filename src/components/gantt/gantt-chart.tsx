@@ -20,7 +20,7 @@ const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
 const HEADER_HEIGHT = 40;
 const TASK_LIST_WIDTH = 250;
-const TASK_BAR_HEIGHT = 28;
+const TASK_BAR_HEIGHT = 22;
 const ARROW_HEAD_SIZE = 5;
 
 export default function GanttChart({ tasks }: GanttChartProps) {
@@ -67,10 +67,10 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT + (ROW_HEIGHT - TASK_BAR_HEIGHT) / 2;
             
             const endX = task.left - ARROW_HEAD_SIZE;
-            const endY = task.top + TASK_BAR_HEIGHT / 2;
+            const endY = task.top + ROW_HEIGHT / 2;
   
             const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
             lines.push({ key: `${depId}-${task.id}`, d });
@@ -144,15 +144,21 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               </div>
               <div className="overflow-hidden">
                 <div className="flex" style={{ width: chartWidth }}>
-                  {days.map((day) => (
-                      <div 
-                        key={day.toISOString()} 
-                        className="flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground"
-                        style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
-                      >
-                         <div>{format(day, 'MMM d')}</div>
-                      </div>
-                    ))}
+                  {days.map((day) => {
+                      const dayOfWeek = day.getDay();
+                      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                      return (
+                        <div 
+                          key={day.toISOString()} 
+                          className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
+                            "bg-muted/50": isWeekend,
+                          })}
+                          style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
+                        >
+                          <div>{format(day, 'MMM d')}</div>
+                        </div>
+                      )
+                    })}
                 </div>
               </div>
             </div>
@@ -182,17 +188,23 @@ export default function GanttChart({ tasks }: GanttChartProps) {
               <div className="absolute top-0" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
-                  {days.map((day, index) => (
-                    <div 
-                      key={day.toISOString()} 
-                      className="absolute top-0 h-full border-r" 
-                      style={{ 
-                        left: index * dayCellWidth, 
-                        width: dayCellWidth, 
-                        borderRightStyle: day.getDay() === 0 ? 'solid' : 'dashed' 
-                      }} 
-                    />
-                  ))}
+                  {days.map((day, index) => {
+                    const dayOfWeek = day.getDay();
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                    return (
+                      <div 
+                        key={day.toISOString()} 
+                        className={cn("absolute top-0 h-full border-r", {
+                          "bg-muted/30": isWeekend,
+                        })}
+                        style={{ 
+                          left: index * dayCellWidth, 
+                          width: dayCellWidth, 
+                          borderRightStyle: dayOfWeek === 0 ? 'solid' : 'dashed' 
+                        }} 
+                      />
+                    )
+                  })}
                 </div>
                 
                 {/* Horizontal grid lines */}
