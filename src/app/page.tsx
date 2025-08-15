@@ -243,7 +243,7 @@ export default function Home() {
 
             <Sheet open={isManualEntryOpen} onOpenChange={setIsManualEntryOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline">
+                <Button>
                   <Plus className="mr-2" />
                   Add Tasks
                 </Button>
@@ -422,5 +422,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
