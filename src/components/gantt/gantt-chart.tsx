@@ -12,7 +12,7 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 40;
+const ROW_HEIGHT = 50;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 100;
 const DAY_CELL_WIDTH_DEFAULT = 40;
@@ -24,14 +24,14 @@ export default function GanttChart({ tasks }: GanttChartProps) {
   const { chartStartDate, chartEndDate } = useMemo(() => {
     if (tasks.length === 0) {
       const today = new Date();
-      return { chartStartDate: addDays(today, -7), chartEndDate: addDays(today, 30) };
+      return { chartStartDate: today, chartEndDate: addDays(today, 30) };
     }
     const startDates = tasks.map(t => t.startDate);
     const endDates = tasks.map(t => t.endDate);
     const minDate = min(startDates);
     const maxDate = max(endDates);
     return {
-      chartStartDate: addDays(minDate, -7),
+      chartStartDate: minDate,
       chartEndDate: addDays(maxDate, 7),
     };
   }, [tasks]);
@@ -138,7 +138,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             {/* Task List */}
             <div className="sticky left-0 z-10 w-[250px] bg-background">
               {tasks.map((task, index) => (
-                <div key={task.id} className="p-2 border-r border-b truncate text-sm font-medium" style={{ height: ROW_HEIGHT, top: index * ROW_HEIGHT, position: 'absolute' }}>
+                <div key={task.id} className="p-2 border-r border-b truncate text-sm font-medium flex items-center" style={{ height: ROW_HEIGHT, top: index * ROW_HEIGHT, position: 'absolute', width: '100%' }}>
                   {task.title}
                 </div>
               ))}
