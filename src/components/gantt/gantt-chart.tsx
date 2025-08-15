@@ -121,7 +121,7 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
     <TooltipProvider>
       <div className="w-full flex flex-col bg-card text-card-foreground rounded-lg overflow-hidden border">
         <div className="p-2 border-b flex items-center justify-between bg-muted/50">
-          <div className="bg-primary/80 text-primary-foreground font-semibold text-lg px-4 py-1 rounded-md shadow">
+          <div className="text-foreground font-semibold text-lg px-4 py-1">
             {projectName} Timeline
           </div>
           <div className="flex items-center gap-1">
@@ -263,5 +263,3 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
     </TooltipProvider>
   );
 }
-
-    
