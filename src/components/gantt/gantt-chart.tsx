@@ -113,79 +113,85 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           </div>
         </div>
         <div className="flex-1 overflow-auto" ref={scrollContainerRef}>
-          <div className="relative" style={{ width: chartWidth, height: chartHeight }}>
-            {/* Timeline Header */}
-            <div className="sticky top-0 z-20 bg-background">
-              <div className="flex" style={{ width: chartWidth }}>
-                {days.map((day, index) => {
-                  const isMonthStart = day.getDate() === 1 || index === 0;
-                  return (
-                    <div key={day.toISOString()} className="flex flex-col items-center" style={{ width: dayCellWidth }}>
-                      {isMonthStart && (
-                        <div className="text-sm font-medium text-primary -ml-8 py-1">
-                          {format(day, 'MMM yyyy')}
+          <div className="relative grid" style={{ width: chartWidth + 250, height: chartHeight }}>
+            {/* Header */}
+            <div className="sticky top-0 z-20 bg-background grid grid-cols-1" style={{ gridTemplateColumns: '250px 1fr' }}>
+              <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center">
+                 <h4 className="font-semibold">Tasks</h4>
+              </div>
+              <div className="overflow-hidden">
+                <div className="flex" style={{ width: chartWidth }}>
+                  {days.map((day, index) => {
+                    const isMonthStart = day.getDate() === 1 || index === 0;
+                    return (
+                      <div key={day.toISOString()} className="flex flex-col items-center border-b" style={{ width: dayCellWidth }}>
+                        {isMonthStart && (
+                          <div className="text-sm font-medium text-primary -ml-8 py-1">
+                            {format(day, 'MMM yyyy')}
+                          </div>
+                        )}
+                        <div className={cn("w-full text-center border-r border-t text-xs py-1", isMonthStart ? 'border-l-2 border-primary/50' : '')}>
+                          {format(day, 'd')}
                         </div>
-                      )}
-                      <div className={cn("w-full text-center border-r border-t text-xs py-1", isMonthStart ? 'border-l-2 border-primary/50' : '')}>
-                        {format(day, 'd')}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            {/* Task List */}
-            <div className="sticky left-0 z-10 w-[250px] bg-background">
-              {tasks.map((task, index) => (
-                <div key={task.id} className="p-2 border-r border-b truncate text-sm font-medium flex items-center" style={{ height: ROW_HEIGHT, top: index * ROW_HEIGHT, position: 'absolute', width: '100%' }}>
+            {/* Content */}
+            <div className="grid" style={{ gridTemplateColumns: '250px 1fr', gridTemplateRows: `repeat(${tasks.length}, ${ROW_HEIGHT}px)`}}>
+              {/* Task List */}
+              {tasks.map((task) => (
+                <div key={task.id} className="sticky left-0 bg-background p-2 border-r border-b truncate text-sm font-medium flex items-center z-10">
                   {task.title}
                 </div>
               ))}
-            </div>
-
-            {/* Grid & Bars */}
-            <div className="absolute top-0 left-0 w-full h-full" style={{ marginLeft: '250px', width: `calc(100% - 250px)` }}>
-               {/* Vertical grid lines */}
-              <div className="absolute top-0 left-0 h-full w-full">
-                {days.map((day, index) => (
-                  <div key={day.toISOString()} className="absolute top-0 h-full border-r" style={{ left: index * dayCellWidth, width: dayCellWidth, borderRightStyle: day.getDay() === 0 ? 'solid' : 'dashed' }} />
-                ))}
-              </div>
               
-              {/* Horizontal grid lines and task bars */}
-              {tasksWithPositions.map((task, index) => (
-                <div key={task.id} className="absolute w-full border-b" style={{ top: task.top, height: ROW_HEIGHT }}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div
-                        className="absolute bg-primary/80 hover:bg-primary rounded-md my-1.5 mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                        style={{ left: task.left, width: task.width, height: ROW_HEIGHT - 12, top: 5 }}
-                      >
-                        <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="font-bold">{task.title}</p>
-                      <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
-                      <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>
-                      <p>Duration: {task.duration} days</p>
-                    </TooltipContent>
-                  </Tooltip>
+              {/* Grid & Bars */}
+              <div className="relative" style={{ gridColumn: 2, gridRow: `1 / span ${tasks.length}` }}>
+                 {/* Vertical grid lines */}
+                <div className="absolute top-0 left-0 h-full w-full">
+                  {days.map((day, index) => (
+                    <div key={day.toISOString()} className="absolute top-0 h-full border-r" style={{ left: index * dayCellWidth, width: dayCellWidth, borderRightStyle: day.getDay() === 0 ? 'solid' : 'dashed' }} />
+                  ))}
                 </div>
-              ))}
-              
-              {/* Dependency Arrows */}
-              <svg width={chartWidth} height={chartHeight} className="absolute top-0 left-0 pointer-events-none">
-                <defs>
-                  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)" stroke="hsl(var(--accent))" />
-                  </marker>
-                </defs>
-                {dependencyLines.map(line => (
-                  <path key={line.key} d={line.d} stroke="hsl(var(--accent))" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
+                
+                {/* Horizontal grid lines and task bars */}
+                {tasksWithPositions.map((task) => (
+                  <div key={task.id} className="absolute w-full border-b" style={{ top: task.top, height: ROW_HEIGHT }}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="absolute bg-primary/80 hover:bg-primary rounded-md my-1.5 mx-px flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
+                          style={{ left: task.left, width: task.width, height: ROW_HEIGHT - 12, top: 5 }}
+                        >
+                          <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="font-bold">{task.title}</p>
+                        <p>Start: {format(task.startDate, 'MMM d, yyyy')}</p>
+                        <p>End: {format(task.endDate, 'MMM d, yyyy')}</p>
+                        <p>Duration: {task.duration} days</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 ))}
-              </svg>
+                
+                {/* Dependency Arrows */}
+                <svg width={chartWidth} height={chartHeight} className="absolute top-0 left-0 pointer-events-none">
+                  <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)" stroke="hsl(var(--accent))" />
+                    </marker>
+                  </defs>
+                  {dependencyLines.map(line => (
+                    <path key={line.key} d={line.d} stroke="hsl(var(--accent))" strokeWidth="2" fill="none" markerEnd="url(#arrow)" />
+                  ))}
+                </svg>
+              </div>
             </div>
           </div>
         </div>
