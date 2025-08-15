@@ -67,7 +67,9 @@ export default function GanttChart({ tasks }: GanttChartProps) {
             const endX = task.left;
             const endY = task.top + ROW_HEIGHT / 2;
   
-            const d = `M ${startX} ${startY} H ${startX + 10} V ${endY} H ${endX}`;
+            const midX = endX - 10;
+            const d = `M ${startX} ${startY} H ${midX} V ${endY} H ${endX}`;
+
             lines.push({ key: `${depId}-${task.id}`, d });
           }
         });
