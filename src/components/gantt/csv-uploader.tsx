@@ -193,6 +193,15 @@ export default function CsvUploader({ onDataUploaded, onClear, hasData }: CsvUpl
         throw new Error(`Circular dependency detected or invalid dependency structure. Could not process tasks: ${unprocessed}`);
     }
 
+    orderedTasks.sort((a, b) => {
+        const resourceA = a.resource || '';
+        const resourceB = b.resource || '';
+        if (resourceA < resourceB) return -1;
+        if (resourceA > resourceB) return 1;
+        // If resources are the same, maintain original order (or sort by start date)
+        return a.startDate.getTime() - b.startDate.getTime();
+    });
+
     return orderedTasks;
   };
 
