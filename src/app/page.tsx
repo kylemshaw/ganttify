@@ -1,15 +1,15 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Task } from '@/lib/types';
 import CsvUploader from '@/components/gantt/csv-uploader';
 import GanttChart from '@/components/gantt/gantt-chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GanttChartSquare, Upload, Download, User, Calendar, Briefcase } from 'lucide-react';
+import { GanttChartSquare, Upload, Download, User, Calendar, Briefcase, CheckCircle, Clock } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { format, min as dateMin, max as dateMax } from 'date-fns';
+import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore } from 'date-fns';
 import {
   Table,
   TableBody,
@@ -24,12 +24,28 @@ interface ResourceSummary {
   startDate: Date;
   endDate: Date;
   totalWorkingDays: number;
+  completedWorkingDays: number;
 }
+
+const getWorkingDays = (start: Date, end: Date) => {
+  if (isBefore(end, start)) return 0;
+  const days = eachDayOfInterval({ start, end });
+  return days.filter(day => {
+    const dayOfWeek = getDay(day);
+    return dayOfWeek !== 0 && dayOfWeek !== 6;
+  }).length;
+};
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [key, setKey] = useState(Date.now()); // To re-render chart on new upload
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    // Set current date on client-side to avoid hydration mismatch
+    setCurrentDate(new Date());
+  }, []);
 
   const handleDataUploaded = (newTasks: Task[]) => {
     setTasks(newTasks);
@@ -70,7 +86,7 @@ export default function Home() {
   };
 
   const resourceSummary = useMemo(() => {
-    if (tasks.length === 0) return null;
+    if (tasks.length === 0 || !currentDate) return null;
 
     const summary = new Map<string, ResourceSummary>();
 
@@ -78,15 +94,20 @@ export default function Home() {
       if (task.resource) {
         const resource = task.resource;
         const existing = summary.get(resource);
+        
+        const completedWorkingDaysForTask = getWorkingDays(task.startDate, dateMin([currentDate, task.endDate]));
+
         if (existing) {
           existing.startDate = dateMin([existing.startDate, task.startDate]);
           existing.endDate = dateMax([existing.endDate, task.endDate]);
           existing.totalWorkingDays += task.workingDuration;
+          existing.completedWorkingDays += completedWorkingDaysForTask;
         } else {
           summary.set(resource, {
             startDate: task.startDate,
             endDate: task.endDate,
-            totalWorkingDays: task.workingDuration
+            totalWorkingDays: task.workingDuration,
+            completedWorkingDays: completedWorkingDaysForTask
           });
         }
       }
@@ -97,17 +118,22 @@ export default function Home() {
     // Project total calculation
     const projectStartDate = dateMin(tasks.map(t => t.startDate));
     const projectEndDate = dateMax(tasks.map(t => t.endDate));
-    const projectTotalDays = Array.from(summary.values()).reduce((acc, curr) => acc + curr.totalWorkingDays, 0);
+    const {projectTotalDays, projectCompletedDays} = Array.from(summary.values()).reduce((acc, curr) => {
+      acc.projectTotalDays += curr.totalWorkingDays;
+      acc.projectCompletedDays += curr.completedWorkingDays;
+      return acc;
+    }, { projectTotalDays: 0, projectCompletedDays: 0 });
 
     const projectSummary: [string, ResourceSummary] = ['Project Total', {
       startDate: projectStartDate,
       endDate: projectEndDate,
-      totalWorkingDays: projectTotalDays
+      totalWorkingDays: projectTotalDays,
+      completedWorkingDays: projectCompletedDays
     }];
 
     return [...sortedSummary, projectSummary];
 
-  }, [tasks]);
+  }, [tasks, currentDate]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-body">
@@ -198,19 +224,29 @@ export default function Home() {
                       <div className="flex items-center gap-2"><Calendar /> End Date</div>
                     </TableHead>
                     <TableHead className="text-right">
-                      <div className="flex items-center gap-2 justify-end"><Briefcase /> Total Working Days</div>
+                       <div className="flex items-center gap-2 justify-end"><Briefcase /> Total Days</div>
+                    </TableHead>
+                    <TableHead className="text-right">
+                       <div className="flex items-center gap-2 justify-end"><CheckCircle /> Days Completed</div>
+                    </TableHead>
+                     <TableHead className="text-right">
+                       <div className="flex items-center gap-2 justify-end"><Clock /> Days Remaining</div>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {resourceSummary.map(([resource, summary]) => (
+                  {resourceSummary.map(([resource, summary]) => {
+                    const remainingDays = summary.totalWorkingDays - summary.completedWorkingDays;
+                    return (
                     <TableRow key={resource} className={resource === 'Project Total' ? 'bg-muted/80 hover:bg-muted font-bold' : ''}>
                       <TableCell>{resource}</TableCell>
                       <TableCell>{format(summary.startDate, 'MMM d, yyyy')}</TableCell>
                       <TableCell>{format(summary.endDate, 'MMM d, yyyy')}</TableCell>
                       <TableCell className="text-right">{summary.totalWorkingDays}</TableCell>
+                      <TableCell className="text-right">{summary.completedWorkingDays}</TableCell>
+                      <TableCell className="text-right">{remainingDays < 0 ? 0 : remainingDays}</TableCell>
                     </TableRow>
-                  ))}
+                  )})}
                 </TableBody>
               </Table>
             </CardContent>
