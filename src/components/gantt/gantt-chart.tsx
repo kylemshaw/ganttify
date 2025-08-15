@@ -14,7 +14,7 @@ interface GanttChartProps {
   tasks: Task[];
 }
 
-const ROW_HEIGHT = 28;
+const ROW_HEIGHT = 22;
 const DAY_CELL_WIDTH_MIN = 20;
 const DAY_CELL_WIDTH_MAX = 150;
 const DAY_CELL_WIDTH_DEFAULT = 50;
@@ -67,10 +67,10 @@ export default function GanttChart({ tasks }: GanttChartProps) {
           const dependencyTask = taskMap.get(depId);
           if (dependencyTask) {
             const startX = dependencyTask.left + dependencyTask.width / 2;
-            const startY = dependencyTask.top + TASK_BAR_HEIGHT + (ROW_HEIGHT - TASK_BAR_HEIGHT) / 2;
+            const startY = dependencyTask.top + TASK_BAR_HEIGHT;
             
             const endX = task.left - ARROW_HEAD_SIZE;
-            const endY = task.top + ROW_HEIGHT / 2;
+            const endY = task.top + TASK_BAR_HEIGHT / 2;
   
             const d = `M ${startX} ${startY} V ${endY} H ${endX}`;
             lines.push({ key: `${depId}-${task.id}`, d });
@@ -151,7 +151,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                         <div 
                           key={day.toISOString()} 
                           className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
-                            "bg-muted/50": isWeekend,
+                            "bg-muted": isWeekend,
                           })}
                           style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
                         >
@@ -195,7 +195,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                       <div 
                         key={day.toISOString()} 
                         className={cn("absolute top-0 h-full border-r", {
-                          "bg-muted/30": isWeekend,
+                          "bg-muted/50": isWeekend,
                         })}
                         style={{ 
                           left: index * dayCellWidth, 
@@ -220,7 +220,7 @@ export default function GanttChart({ tasks }: GanttChartProps) {
                           <TooltipTrigger asChild>
                             <div
                               className="absolute bg-primary/80 hover:bg-primary rounded-md flex items-center justify-start pl-2 cursor-pointer transition-all duration-200"
-                              style={{ top: task.top + (ROW_HEIGHT - TASK_BAR_HEIGHT) / 2, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
+                              style={{ top: task.top, left: task.left, width: task.width, height: TASK_BAR_HEIGHT }}
                             >
                               <span className="text-xs font-medium text-primary-foreground truncate hidden md:inline">{task.title}</span>
                             </div>
