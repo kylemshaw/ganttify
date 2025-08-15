@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { format, min as dateMin, max as dateMax, eachDayOfInterval, getDay, isBefore } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -203,7 +204,7 @@ export default function Home() {
         </div>
         {resourceSummary && (
           <Card className="shadow-md">
-            <CardHeader className="flex flex-row items-start justify-between">
+            <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Briefcase />
@@ -213,25 +214,29 @@ export default function Home() {
                   An overview of resource allocation and project timeline.
                 </CardDescription>
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="w-[280px] justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={currentDate || undefined}
-                    onSelect={(date) => date && setCurrentDate(date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="current-date" className="text-muted-foreground">Current Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="current-date"
+                      variant={"outline"}
+                      className="w-[240px] justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {currentDate ? format(currentDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={currentDate || undefined}
+                      onSelect={(date) => date && setCurrentDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
