@@ -139,59 +139,60 @@ export default function GanttChart({ tasks, projectName }: GanttChartProps) {
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto" ref={scrollContainerRef}>
-          <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight + HEADER_HEIGHT }}>
-            {/* Header */}
-            <div className="sticky top-0 z-20 bg-background flex" style={{width: chartWidth + TASK_LIST_WIDTH}}>
-              <div className="sticky left-0 z-10 border-r border-b p-2 flex items-center bg-background" style={{width: TASK_LIST_WIDTH, minWidth: TASK_LIST_WIDTH, height: HEADER_HEIGHT}}>
-                 <h4 className="font-semibold">Tasks</h4>
+        <div className="flex">
+           {/* Task List and Header (Sticky) */}
+           <div className="sticky left-0 z-20 bg-background flex flex-col border-r" style={{ width: TASK_LIST_WIDTH, minWidth: TASK_LIST_WIDTH }}>
+              <div className="z-10 border-b p-2 flex items-center bg-background" style={{ width: TASK_LIST_WIDTH, minWidth: TASK_LIST_WIDTH, height: HEADER_HEIGHT }}>
+                  <h4 className="font-semibold">Tasks</h4>
               </div>
-              <div className="flex" style={{ width: chartWidth }}>
-                {days.map((day) => {
-                    const dayOfWeek = getDay(day);
-                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                    return (
-                      <div 
-                        key={day.toISOString()} 
-                        className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
-                          "bg-muted/75": isWeekend,
-                        })}
-                        style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
-                      >
-                        <div>{format(day, 'MMM d')}</div>
+              <div className="flex-grow bg-background" style={{ height: chartHeight }}>
+                 {tasksWithPositions.map((task, index) => (
+                    <div 
+                      key={task.id} 
+                      className="p-2 border-b truncate text-sm flex items-center justify-between"
+                      style={{ height: ROW_HEIGHT, width: TASK_LIST_WIDTH }}
+                    >
+                      <div className='flex items-center gap-2'>
+                          <span className="font-medium truncate">{task.title}</span>
+                          <span className="text-muted-foreground">{task.workingDuration} days</span>
                       </div>
-                    )
-                  })}
-              </div>
-            </div>
 
-            {/* Content Area */}
-            <div className="relative" style={{ width: chartWidth + TASK_LIST_WIDTH, height: chartHeight }}>
-              {/* Task List */}
-              <div className="absolute top-0 left-0 z-10 bg-background" style={{ width: TASK_LIST_WIDTH, height: chartHeight }}>
-                {tasksWithPositions.map((task, index) => (
-                  <div 
-                    key={task.id} 
-                    className="p-2 border-r border-b truncate text-sm flex items-center justify-between"
-                    style={{ top: index * ROW_HEIGHT, height: ROW_HEIGHT, width: TASK_LIST_WIDTH, position: 'absolute' }}
-                  >
-                    <div className='flex items-center gap-2'>
-                        <span className="font-medium truncate">{task.title}</span>
-                        <span className="text-muted-foreground">{task.workingDuration} days</span>
+                      {task.resource && (
+                        <Badge variant="secondary" className="gap-1.5 shrink-0">
+                          <User className="w-3 h-3" />
+                          {task.resource}
+                        </Badge>
+                      )}
                     </div>
+                  ))}
+              </div>
+           </div>
 
-                    {task.resource && (
-                      <Badge variant="secondary" className="gap-1.5 shrink-0">
-                        <User className="w-3 h-3" />
-                        {task.resource}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
+           {/* Scrollable Gantt Area */}
+           <div className="overflow-x-auto flex-grow" ref={scrollContainerRef}>
+              {/* Header Row */}
+              <div className="sticky top-0 z-20 bg-background flex" style={{ width: chartWidth }}>
+                 {days.map((day) => {
+                      const dayOfWeek = getDay(day);
+                      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                      return (
+                        <div 
+                          key={day.toISOString()} 
+                          className={cn("flex items-center justify-center border-b border-r text-center text-xs text-muted-foreground", {
+                            "bg-muted/75": isWeekend,
+                          })}
+                          style={{ width: dayCellWidth, minWidth: dayCellWidth, height: HEADER_HEIGHT }}
+                        >
+                          <div>{format(day, 'MMM d')}</div>
+                        </div>
+                      )
+                    })}
               </div>
 
-              {/* Grid & Bars */}
-              <div className="absolute top-0" style={{ left: TASK_LIST_WIDTH, width: chartWidth, height: chartHeight }}>
+              {/* Content Area */}
+              <div className="relative" style={{ width: chartWidth, height: chartHeight }}>
+                {/* Grid & Bars */}
+                <div className="absolute top-0 left-0" style={{ width: chartWidth, height: chartHeight }}>
                 {/* Vertical grid lines */}
                 <div className="absolute top-0 left-0 h-full w-full">
                   {days.map((day, index) => {
